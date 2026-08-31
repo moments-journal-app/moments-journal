@@ -1689,7 +1689,7 @@ INSTRUCTIONS:
 
             const safePrompt = encodeURIComponent(parsed.imagePrompt);
             const dynamicSeed = Math.floor(Math.random() * 1000000);
-            const bgUrl = `https://image.pollinations.ai/prompt/${safePrompt}?width=1024&height=1024&nologo=true&enhance=true&seed=${dynamicSeed}`;
+            const bgUrl = `https://image.pollinations.ai/prompt/${safePrompt}?width=1024&height=1024&nologo=true&enhance=false&seed=${dynamicSeed}`;
 
             statusText.innerText = "Programmatically compositioning all monthly photos into the archive frame...";
             
@@ -1867,10 +1867,11 @@ ${milestoneSetup.artStyle}
 
 INSTRUCTIONS:
 1. Write ONE 3-sentence revelation grounded in their actual data. Acknowledge contradictions and avoid therapy-speak, generic gratitude, and clichés. Output this in the "revelation" property.
-2. Write a max 70-word prompt for an image generator to create an absolute high-quality, premium masterpiece. Output this in the "imagePrompt" property.
-3. IF A PHOTO IS PROVIDED: You MUST perform an absolute computer vision extraction of the EXACT features (e.g., precise glasses shape, precise clothing colors/patterns, ages, specific poses, relationships, hair color/texture) from the reference photo and convert them directly into stunning, high-budget, anatomically correct characters perfectly matched to the chosen ${milestoneSetup.artStyle} aesthetic. Ignore generic boilerplate. Every character, face, and clothing item must be rigorously tied to the photo constraint.
-4. IF NO PHOTO IS PROVIDED: Create a breathtakingly gorgeous, highly detailed environment or symbolic visualization based on the text data in the ${milestoneSetup.artStyle} aesthetic.
-5. The imagePrompt MUST begin exactly with: 'A breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}, featuring...' Output ONLY valid JSON matching: {"revelation": "...", "imagePrompt": "..."}`;
+2. Write a highly detailed prompt (approx. 100-150 words) for an image generator. Output this in the "imagePrompt" property.
+3. IF A PHOTO IS PROVIDED: You MUST perform an absolute computer vision extraction of the EXACT features (e.g., precise skin tone, hair color/texture, facial hair, glasses shape, precise clothing colors/patterns, ages, specific poses, relationships) from the reference photo and convert them directly into stunning, high-budget, anatomically correct characters perfectly matched to the chosen ${milestoneSetup.artStyle} aesthetic. 
+4. CRITICAL: PRESERVE EXACT ETHNICITY, AGE, AND GENDER. Do not whitewash or make the subjects generic. Every character, face, and clothing item must be rigorously tied to the photo constraint.
+5. IF NO PHOTO IS PROVIDED: Create a breathtakingly gorgeous, highly detailed environment or symbolic visualization based on the text data in the ${milestoneSetup.artStyle} aesthetic.
+6. The imagePrompt MUST begin exactly with: 'A breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}, featuring...' Output ONLY valid JSON matching: {"revelation": "...", "imagePrompt": "..."}`;
 
         let promptPayload = {
           contents: [{ parts: [ { text: directorPrompt } ] }],
@@ -1892,7 +1893,7 @@ INSTRUCTIONS:
 
         const safePrompt = encodeURIComponent(parsed.imagePrompt);
         const dynamicSeed = Math.floor(Math.random() * 1000000);
-        const imageUrl = `https://image.pollinations.ai/prompt/${safePrompt}?width=1024&height=1024&nologo=true&enhance=true&seed=${dynamicSeed}`;
+        const imageUrl = `https://image.pollinations.ai/prompt/${safePrompt}?width=1024&height=1024&nologo=true&enhance=false&seed=${dynamicSeed}`;
 
         if (allEntries.length > 0) {
             allEntries[allEntries.length - 1].artifactUrl = imageUrl;
