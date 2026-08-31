@@ -103,7 +103,7 @@
     .journal-content { padding: 1rem 1.2rem 6rem 1.2rem; max-width: 800px; margin: 0 auto; width: 100%; }
     .question-block { margin-bottom: 1.5rem; }
     .question-text { font-size: 1rem; font-weight: 500; margin-bottom: 0.6rem; line-height: 1.4; text-align: center;}
-    textarea, input[type="text"].journal-input, input[type="file"].journal-input { width: 100%; border: 1px solid var(--border-light); border-radius: 10px; padding: 0.8rem; font-size: 0.95rem; background: rgba(255,255,255,0.9); resize: none; transition: border-color 0.2s; }
+    textarea, input[type="text"].journal-input { width: 100%; border: 1px solid var(--border-light); border-radius: 10px; padding: 0.8rem; font-size: 0.95rem; background: rgba(255,255,255,0.9); resize: none; transition: border-color 0.2s; }
     textarea:focus, input[type="text"].journal-input:focus { outline: none; border-color: var(--ink-color); }
     .toggle-group { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center;}
     .toggle-btn { flex: 1; padding: 0.6rem; border: 1px solid var(--border-light); border-radius: 8px; background: white; font-weight: 600; color: var(--text-main); cursor: pointer; transition: all 0.2s; font-size: 0.9rem;}
@@ -133,7 +133,7 @@
     #screen-weekly-review .toggle-btn { flex: 0 0 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; padding: 0; }
 
     .milestone-screen { justify-content: flex-start; align-items: center; padding: 1.5rem; overflow-y: auto; text-align: center;}
-    .generated-img { width: 100%; max-width: 450px; max-height: 600px; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-bottom: 1.5rem; display: none; background: white; padding: 10px; }
+    .generated-img { width: 100%; max-width: 450px; max-height: 450px; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-bottom: 1.5rem; display: none; background: white; padding: 10px; }
     .finale-revelation { font-size: 1.1rem; line-height: 1.6; color: var(--text-main); margin-bottom: 2rem; font-style: italic; max-width: 600px; padding: 0 10px;}
     
     .file-upload-wrapper { position: relative; width: 100%; max-width: 400px; margin: 0 auto;}
@@ -381,20 +381,9 @@
   <div id="screen-milestone-setup" class="screen milestone-screen">
     <div style="position: relative; z-index: 1; width: 100%; max-width: 400px; margin: 0 auto; padding-bottom: 4rem;">
       <h1 id="milestone-setup-title">Weekly Artifact</h1>
-      <p class="subtitle" id="milestone-setup-subtitle">It's time to generate your weekly painting.</p>
+      <p class="subtitle" id="milestone-setup-subtitle">Choose your aesthetic.</p>
       
-      <div id="memory-gallery-container" style="display: none;">
-          <div class="section-title">Memory Gallery</div>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: -8px; margin-bottom: 10px;">Select a photo from this week to serve as the visual anchor for your artifact.</p>
-          <div class="gallery-container" id="memory-gallery-scroll"></div>
-      </div>
-
-      <div class="section-title" id="upload-override-title">Or Upload a New Anchor</div>
-      <div class="file-upload-wrapper" style="margin-bottom: 1.5rem;">
-        <label for="base-image-upload" class="file-upload-label">📷 Tap to Upload</label>
-        <input type="file" id="base-image-upload" class="file-upload-input" accept="image/*" onchange="handleMilestoneImageUpload(event)">
-        <img id="preview-image" src="" alt="Preview">
-      </div>
+      <!-- REMOVED: In-app Reference Photo upload to force manual Gemini Upload via Base64 -->
 
       <div class="section-title">Choose Art Style</div>
       <div class="toggle-group" id="stylePicker" style="margin-bottom: 1.5rem; justify-content: center;">
@@ -406,7 +395,7 @@
         <button class="toggle-btn" onclick="selectStyleOption(this, 'Retro 80s Anime')">80s Anime</button>
       </div>
 
-      <button class="btn" style="margin-top: 1rem;" onclick="triggerHaptic(); generateMilestone()">Decode & Prep Prompt</button>
+      <button class="btn" style="margin-top: 2rem;" onclick="triggerHaptic(); generateMilestone()">Decode & Prep Prompt</button>
     </div>
   </div>
 
@@ -414,30 +403,29 @@
     <div style="position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 600px; margin: 0 auto; padding: 2rem 1rem;">
       <h1 style="color: var(--ink-color); margin-bottom: 0.5rem;" id="finale-title">Weekly Artifact</h1>
       <p class="subtitle" id="milestone-status">Decoding emotional data...</p>
-      
-      <!-- NEW COPY/PASTE UI (Hidden initially) -->
+
       <div id="weekly-prompt-container" style="display:none; width: 100%; margin-bottom: 1.5rem; text-align: left;">
           <div class="section-title" style="text-align: left; margin-top: 0;">1. Copy this Prompt</div>
-          <p style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text-muted);">Take this to Gemini (or another generator) to create your image.</p>
+          <p style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text-muted);">Paste this encrypted prompt into Gemini along with your reference photo.</p>
           <textarea id="generated-prompt-text" class="journal-input" rows="5" readonly style="margin-bottom: 8px; font-size: 0.85rem; line-height: 1.4;"></textarea>
           <button class="btn" onclick="copyPrompt()" style="background: var(--text-muted); padding: 0.6rem; font-size: 0.9rem;">📋 Copy Prompt</button>
       </div>
 
       <div id="weekly-upload-container" style="display:none; width: 100%; margin-bottom: 1.5rem; text-align: left;">
           <div class="section-title" style="text-align: left;">2. Upload Result</div>
-          <p style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text-muted);">Save the image from Gemini and upload it here to bind it to your journal.</p>
+          <p style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text-muted);">Save the resulting image from Gemini and upload it here to bind it to your journal.</p>
           <input type="file" id="gemini-image-upload" accept="image/*" class="journal-input" onchange="handleGeminiUpload(event)">
       </div>
-
-      <!-- IMAGE DISPLAY CONTAINER -->
+      
+      <!-- FIXED CONTAINER STYLING SO IMAGE STAYS CENTERED & NEVER MOVES TO BG -->
       <div id="image-display-container" style="display:none; background: rgba(255,255,255,0.9); padding: 15px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 1.5rem; width: 100%; justify-content: center; align-items: center;">
-        <img id="generated-milestone-img" class="generated-img" src="" alt="Milestone Artwork" crossorigin="anonymous" style="display: none; max-width: 100%; height: auto; border-radius: 8px; box-shadow: none; margin-bottom: 0;">
+        <img id="generated-milestone-img" class="generated-img" src="" alt="Milestone Artwork" crossorigin="anonymous" style="display: none; max-width: 100%; height: auto; border-radius: 8px;">
       </div>
 
       <div class="finale-revelation" id="finale-revelation-text" style="background: rgba(255,255,255,0.85); padding: 15px; border-radius: 12px; margin-bottom: 1.5rem; width: 100%;"></div>
       
-      <div id="finale-buttons" style="display: none; gap: 10px; width: 100%; max-width: 400px; flex-direction: column;">
-        <button class="btn" id="milestone-download-btn" onclick="triggerHaptic(); downloadMilestone()" style="background: var(--ink-color); display: none;">Save to Camera Roll</button>
+      <div id="finale-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 400px; flex-direction: column;">
+        <button class="btn" id="milestone-download-btn" onclick="triggerHaptic(); downloadMilestone()" style="background: var(--ink-color);">Save to Camera Roll</button>
         <button class="btn" id="milestone-advance-btn" onclick="triggerHaptic(); finishMilestone()" style="background: transparent; color: var(--text-main); border: 1px solid var(--border-light);">Continue Journey</button>
       </div>
     </div>
@@ -445,7 +433,6 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyvwgB3BLe3YL_6BJ9UfVPMdRFE0Tl69kZY4fbpozw_w2bT3b-ZbFuaUToXDfV8rsZlPA/exec";
-    const BINGO_API_URL = "https://script.google.com/macros/s/AKfycbyczvvwajF5GAX4T3qwg-tqm1hyISmNMfMFMCSILhZifKmtqqOKnXoRzxCEh_zdJr0PQA/exec";
 
     const safeStore = {
       get: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
@@ -465,6 +452,7 @@
     let tempAppRating = '3';
     let currentSundayBingoSelections = [];
 
+    // Helper: Timeout fetch to prevent hangs
     async function fetchWithTimeout(url, options = {}, timeout = 6000) {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
@@ -964,49 +952,6 @@
       milestoneSetup.artStyle = styleValue;
     }
 
-    function selectGalleryPhoto(base64Data, imgElement) {
-        triggerHaptic();
-        document.querySelectorAll('.gallery-thumbnail').forEach(el => el.classList.remove('selected'));
-        imgElement.classList.add('selected');
-        milestoneSetup.baseImageBase64 = base64Data;
-        document.getElementById('preview-image').style.display = 'none';
-        document.getElementById('base-image-upload').value = '';
-    }
-
-    function handleMilestoneImageUpload(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const img = new Image();
-          img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 800;
-            const MAX_HEIGHT = 800;
-            let width = img.width;
-            let height = img.height;
-            
-            if (width > height && width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-            else if (height > MAX_WIDTH) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-            
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-            milestoneSetup.baseImageBase64 = dataUrl.split(',')[1];
-            
-            document.getElementById('preview-image').src = dataUrl;
-            document.getElementById('preview-image').style.display = 'block';
-            document.querySelectorAll('.gallery-thumbnail').forEach(el => el.classList.remove('selected'));
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-
     function handleDailyImageUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1050,7 +995,7 @@
                 const imgElement = document.getElementById('generated-milestone-img');
                 
                 imgElement.src = dataUrl;
-                imgContainer.style.display = 'flex';
+                if (imgContainer) imgContainer.style.display = 'flex';
                 imgElement.style.display = 'block';
 
                 if (allEntries.length > 0) {
@@ -1061,7 +1006,6 @@
                 const advBtn = document.getElementById('milestone-advance-btn');
                 advBtn.disabled = false;
                 advBtn.innerText = "Continue Journey";
-                advBtn.onclick = function() { triggerHaptic(); finishMilestone(); };
             };
             reader.readAsDataURL(file);
         }
@@ -1487,37 +1431,29 @@
       const grid = document.getElementById('bingo-board-grid');
       grid.innerHTML = '<div style="grid-column: span 3; color: var(--text-muted); padding: 2rem;">Loading Sunday Bingo...</div>';
       currentSundayBingoSelections = [];
-      
-      let prompts = [
-        "Put yourself in a minor inconvenience for someone",
-        "Slept without checking a screen last thing",
-        "Noticed a patch of sunlight or nature",
-        "Cooked or tasted something comforting",
-        "Forgave yourself for a small mistake",
-        "Listened to understand, not to reply",
-        "Prioritized your own energy or boundaries",
-        "Doodled, hummed, or played aimlessly",
-        "Counted your blessings out loud"
-      ];
+      let prompts = [];
 
       try {
-        const response = await fetchWithTimeout(`${BINGO_API_URL}?action=getBingoQuestions`, {}, 8000);
-        const data = await response.json();
-        if (data && Array.isArray(data) && data.length > 0 && !data.error) {
-          prompts = data.map(item => {
-              if (typeof item === 'string') return item;
-              if (item.text) return item.text;
-              return Object.values(item)[0]; 
-          }).filter(Boolean);
-          safeStore.set('cachedBingo', JSON.stringify(prompts));
+        const sheetId = '14tqh6e8-Q3EtIltNW1qep7bZQk4P8D1ELFxr9nOxNXY';
+        const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+        const response = await fetchWithTimeout(sheetUrl, {}, 8000);
+        const csvText = await response.text();
+        const rows = csvText.split('\n').map(row => row.replace(/^"|"$/g, '').trim()).filter(r => r.length > 0);
+        
+        if (rows.length > 1) { 
+            prompts = rows.slice(1).map(r => r.split(',')[0]);
+            safeStore.set('cachedBingo', JSON.stringify(prompts));
         }
       } catch (err) {
         let cached = safeStore.get('cachedBingo');
         if (cached) { try { let parsed = JSON.parse(cached); if(parsed.length > 0) prompts = parsed; } catch(e){} }
       }
 
+      if (prompts.length === 0) {
+         prompts = ["Put yourself in a minor inconvenience for someone", "Slept without checking a screen last thing", "Noticed a patch of sunlight", "Cooked something comforting", "Forgave yourself", "Listened to understand", "Prioritized your energy", "Doodled aimlessly", "Counted blessings"];
+      }
+
       grid.innerHTML = '';
-      
       const shuffledPrompts = prompts.sort(() => 0.5 - Math.random());
       const selectedPrompts = shuffledPrompts.slice(0, 9);
       
@@ -1645,55 +1581,28 @@
         .finally(() => {
           btn.innerText = "Seal & Proceed";
           btn.disabled = false;
-          
-          const recentEntries = allEntries.slice(-7);
-          const photos = recentEntries.filter(e => e.dailyPhoto).map(e => e.dailyPhoto);
-          
-          const galleryContainer = document.getElementById('memory-gallery-container');
-          const galleryScroll = document.getElementById('memory-gallery-scroll');
-          
-          if (photos.length > 0) {
-              galleryScroll.innerHTML = '';
-              photos.forEach((photo, idx) => {
-                  let img = document.createElement('img');
-                  img.src = "data:image/jpeg;base64," + photo;
-                  img.className = 'gallery-thumbnail';
-                  img.onclick = function() { selectGalleryPhoto(photo, this); };
-                  galleryScroll.appendChild(img);
-              });
-              
-              galleryContainer.style.display = 'block';
-              document.getElementById('upload-override-title').innerText = "Or Upload a New Anchor";
-              
-              const lastImg = galleryScroll.lastElementChild;
-              if(lastImg) lastImg.click();
-              
-          } else {
-              galleryContainer.style.display = 'none';
-              document.getElementById('upload-override-title').innerText = "2. Reference Photo (Optional)";
-          }
-          
           document.getElementById('milestone-setup-title').innerText = "Weekly Artifact";
-          document.getElementById('milestone-setup-subtitle').innerText = "It's time to generate your weekly painting.";
+          document.getElementById('milestone-setup-subtitle').innerText = "Choose your aesthetic.";
           document.getElementById('finale-title').innerText = "Weekly Artifact";
           showScreen('screen-milestone-setup');
         });
     }
 
-    // New Monthly Collage Logic using raw Canvas drawing and original photos
     async function generateMonthlyCollage() {
         showScreen('screen-finale');
         document.getElementById('finale-title').innerText = "Monthly Artifact";
         const statusText = document.getElementById('milestone-status');
-        statusText.innerText = "The Archivist is reviewing your month...";
+        statusText.innerText = "Stitching your monthly photo collage...";
 
-        document.getElementById('weekly-prompt-container').style.display = 'none';
-        document.getElementById('weekly-upload-container').style.display = 'none';
+        const promptCont = document.getElementById('weekly-prompt-container');
+        if(promptCont) promptCont.style.display = 'none';
+        const upCont = document.getElementById('weekly-upload-container');
+        if(upCont) upCont.style.display = 'none';
+        
         document.getElementById('image-display-container').style.display = 'none';
         document.getElementById('finale-buttons').style.display = 'none';
 
         try {
-            const apiKey = userSetup.apiKey;
             let todayDate = new Date(startDate);
             todayDate.setDate(startDate.getDate() + (currentDay - 1));
             const currentMonthIndex = todayDate.getMonth();
@@ -1704,64 +1613,35 @@
                 return d.getMonth() === currentMonthIndex;
             });
             
-            const summaries = monthEntries.map(e => `Day ${e.day}: Mood=${e.energy}, Anchor="${e.anchor}" ${e.bingoSummary ? ' | Highlights: ' + e.bingoSummary : ''}`).join(" | ");
             const photos = monthEntries.filter(e => e.dailyPhoto).map(e => e.dailyPhoto);
 
-            const flashUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
-
-            const archivistPrompt = `SYSTEM ROLE:
-You are the Lead Archivist and Narrative Director for a private personal journal called Moments Journal.
-Your task is to analyze a month of life data and output a summary and short photo captions to generate a scrapbook layout.
-
-USER DATA:
-${summaries}
-
-INSTRUCTIONS:
-1. Write ONE overarching 3-sentence revelation grounded in specific details from the data. Acknowledge contradictions and major emotional shifts. Avoid clichés. Output this in "revelation".
-2. Create exactly ${photos.length || 1} short, poetic captions (max 3 words each) that reflect the general mood of the month. Output this as an array of strings in "captions".
-
-OUTPUT ONLY valid JSON matching exactly: {"revelation": "...", "captions": ["Caption 1", "Caption 2"]}`;
-
-            let promptPayload = {
-              contents: [{ parts: [{ text: archivistPrompt }] }],
-              generationConfig: { responseMimeType: "application/json" }
-            };
-
-            const flashRes = await fetchWithTimeout(flashUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(promptPayload) }, 15000);
-            const flashData = await flashRes.json();
-            let aiText = flashData.candidates[0].content.parts[0].text;
-            aiText = aiText.replace(/```json/gi, '').replace(/```/gi, '').trim();
-            const parsed = JSON.parse(aiText);
-
-            document.getElementById('finale-revelation-text').innerText = parsed.revelation;
-            statusText.innerText = "Stitching your monthly photo collage...";
-
             const canvas = document.createElement('canvas');
-            canvas.width = 1080; 
-            canvas.height = 1920;
+            canvas.width = 1200; 
+            canvas.height = 1200;
             const ctx = canvas.getContext('2d');
             
-            // Draw Gradient Background
-            let grd = ctx.createLinearGradient(0, 0, 0, 1920);
-            grd.addColorStop(0, "#fdf2e9");
-            grd.addColorStop(1, "#f2d3c2");
-            ctx.fillStyle = grd;
-            ctx.fillRect(0, 0, 1080, 1920);
+            ctx.fillStyle = '#2d3748';
+            ctx.fillRect(0, 0, 1200, 1200);
 
-            // Draw Header
-            ctx.fillStyle = "#2d3748";
-            ctx.font = "bold 60px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText("Moments Journal", 540, 120);
-            ctx.font = "40px sans-serif";
-            ctx.fillText(`Monthly Reflections`, 540, 180);
+            ctx.fillStyle = '#fcf4f1';
+            ctx.font = 'bold 48px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("Monthly Collage", 600, 80);
 
-            // Draw Photos
             if (photos.length > 0) {
-                let cols = 2;
+                let cols = Math.ceil(Math.sqrt(photos.length));
                 let rows = Math.ceil(photos.length / cols);
-                let cellH = 1200 / (rows === 0 ? 1 : rows);
-                if (rows > 3) cellH = 400; // Limit spacing so it doesn't compress too much
+                
+                let innerSpacing = 20; 
+                let outerMargin = 100;
+                let startY = 140;
+                
+                let availableWidth = 1200 - (outerMargin * 2) - (innerSpacing * (cols - 1));
+                let availableHeight = 1200 - startY - outerMargin - (innerSpacing * (rows - 1));
+                
+                let cellSize = Math.min(availableWidth / cols, availableHeight / rows);
+                
+                let startX = (1200 - (cols * cellSize) - (innerSpacing * (cols - 1))) / 2;
 
                 for (let i = 0; i < photos.length; i++) {
                     await new Promise(resolve => {
@@ -1769,43 +1649,25 @@ OUTPUT ONLY valid JSON matching exactly: {"revelation": "...", "captions": ["Cap
                         img.onload = () => {
                             let col = i % cols;
                             let row = Math.floor(i / cols);
-                            let centerX = (col * 540) + 270 + (Math.random() * 60 - 30);
-                            let centerY = (row * cellH) + 400 + (Math.random() * 60 - 30);
-                            let rot = (Math.random() * 20 - 10) * Math.PI / 180;
+                            
+                            let x = startX + (col * (cellSize + innerSpacing));
+                            let y = startY + (row * (cellSize + innerSpacing));
+                            
+                            ctx.fillStyle = 'white';
+                            ctx.fillRect(x, y, cellSize, cellSize);
 
-                            ctx.save();
-                            ctx.translate(centerX, centerY);
-                            ctx.rotate(rot);
-
-                            // Shadow
-                            ctx.shadowColor = 'rgba(0,0,0,0.15)';
-                            ctx.shadowBlur = 15;
-                            ctx.shadowOffsetX = 5;
-                            ctx.shadowOffsetY = 10;
-
-                            // Polaroid Base
-                            ctx.fillStyle = '#fff';
-                            ctx.fillRect(-220, -260, 440, 520);
-
-                            ctx.shadowColor = 'transparent';
-
-                            // Text
-                            ctx.fillStyle = '#2d3748';
-                            ctx.font = 'italic 26px serif';
-                            ctx.textAlign = 'center';
-                            let cap = (parsed.captions && parsed.captions[i]) ? parsed.captions[i] : "A captured moment";
-                            ctx.fillText(cap, 0, 210);
-
-                            // Image Clip & Draw
-                            ctx.save();
-                            ctx.beginPath();
-                            ctx.rect(-190, -230, 380, 380);
-                            ctx.clip();
-                            let scale2 = Math.max(380 / img.width, 380 / img.height);
-                            ctx.drawImage(img, (img.width - 380/scale2)/2, (img.height - 380/scale2)/2, 380/scale2, 380/scale2, -190, -230, 380, 380);
-                            ctx.restore();
-
-                            ctx.restore();
+                            let matteWidth = 10;
+                            let drawSize = cellSize - (matteWidth * 2);
+                            
+                            let scale = Math.max(drawSize / img.width, drawSize / img.height);
+                            let sw = img.width;
+                            let sh = img.height;
+                            let cropSize = Math.min(sw, sh);
+                            
+                            let sx = (sw - cropSize) / 2;
+                            let sy = (sh - cropSize) / 2;
+                            
+                            ctx.drawImage(img, sx, sy, cropSize, cropSize, x + matteWidth, y + matteWidth, drawSize, drawSize);
                             resolve();
                         };
                         img.onerror = () => resolve(); 
@@ -1816,64 +1678,22 @@ OUTPUT ONLY valid JSON matching exactly: {"revelation": "...", "captions": ["Cap
                 ctx.fillStyle = 'rgba(255,255,255,0.7)';
                 ctx.font = 'italic 36px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText("No memories captured this month.", 540, 960);
+                ctx.fillText("No memories captured this month.", 600, 600);
             }
-
-            // Summary Box Bottom
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            let bx = 60, by = 1600, bw = 960, bh = 280, br = 20;
-            ctx.beginPath();
-            ctx.moveTo(bx + br, by);
-            ctx.lineTo(bx + bw - br, by);
-            ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + br);
-            ctx.lineTo(bx + bw, by + bh - br);
-            ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - br, by + bh);
-            ctx.lineTo(bx + br, by + bh);
-            ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - br);
-            ctx.lineTo(bx, by + br);
-            ctx.quadraticCurveTo(bx, by, bx + br, by);
-            ctx.fill();
-
-            ctx.fillStyle = '#2d3748';
-            ctx.font = 'bold 36px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText("Month Highlights", 540, 1660);
-
-            ctx.font = '28px sans-serif';
-            function wrapText(context, text, x, y, maxWidth, lineHeight) {
-                let words = text.split(' ');
-                let line = '';
-                for(let n = 0; n < words.length; n++) {
-                    let testLine = line + words[n] + ' ';
-                    let metrics = context.measureText(testLine);
-                    let testWidth = metrics.width;
-                    if (testWidth > maxWidth && n > 0) {
-                        context.fillText(line.trim(), x, y);
-                        line = words[n] + ' ';
-                        y += lineHeight;
-                    } else {
-                        line = testLine;
-                    }
-                }
-                context.fillText(line.trim(), x, y);
-            }
-            wrapText(ctx, parsed.revelation, 540, 1720, 880, 40);
 
             const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
             
             if (allEntries.length > 0) {
                 allEntries[allEntries.length - 1].artifactUrl = dataUrl;
-                allEntries[allEntries.length - 1].artifactRevelation = parsed.revelation;
                 allEntries[allEntries.length - 1].isMonthlySummit = true; 
                 safeStore.set('allEntries', JSON.stringify(allEntries));
             }
 
             const imgElement = document.getElementById('generated-milestone-img');
-            const imgContainer = document.getElementById('image-display-container');
             
             imgElement.onload = function() {
                 statusText.style.display = 'none';
-                imgContainer.style.display = 'flex';
+                document.getElementById('image-display-container').style.display = 'flex';
                 imgElement.style.display = 'block';
                 const advBtn = document.getElementById('milestone-advance-btn');
                 advBtn.innerText = "Weave PDF Keepsake";
@@ -1890,7 +1710,6 @@ OUTPUT ONLY valid JSON matching exactly: {"revelation": "...", "captions": ["Cap
         }
     }
 
-    // New Weekly Generation Logic (Prompt copying + Manual upload)
     async function generateWeeklyMilestone() {
       showScreen('screen-finale');
       const statusText = document.getElementById('milestone-status');
@@ -1912,31 +1731,20 @@ OUTPUT ONLY valid JSON matching exactly: {"revelation": "...", "captions": ["Cap
         
         const directorPrompt = `SYSTEM ROLE:
 You are the Visual Memory Director for a private personal journal.
-Your task is to analyze user data and a reference photo to output precise physical descriptions to form an image generation prompt.
+Your task is to analyze user data and output a precise physical description and mood setting.
 
 USER DATA:
 ${summaries}
 
 INSTRUCTIONS:
 1. Write ONE 3-sentence revelation grounded in their actual data. Avoid therapy-speak and cliches. Put this in "revelation".
-2. IF A PHOTO IS PROVIDED: Perform an absolute computer vision extraction of the exact features from the reference photo. You must output 4 specific properties:
-   - "subjects": Exact skin tone, hair color/texture, facial hair, glasses, ages, and relationships. (CRITICAL USER PREFERENCE: If a toddler girl is present, she is named Ellu, has thin slightly curly hair, and communicates strictly through babble and gestures without speaking real words).
-   - "clothing": Precise colors, fabrics, and patterns of the garments.
-   - "action": Specific poses and interactions.
-   - "setting": The background environment.
-   CRITICAL: PRESERVE EXACT ETHNICITY, AGE, AND GENDER. Do not whitewash.
-3. IF NO PHOTO IS PROVIDED: Put "None" in subjects, clothing, and action. Put a gorgeous environment description in "setting".
 
-OUTPUT ONLY valid JSON exactly matching: {"revelation": "...", "subjects": "...", "clothing": "...", "action": "...", "setting": "..."}`;
+OUTPUT ONLY valid JSON exactly matching: {"revelation": "..."}`;
 
         let promptPayload = {
           contents: [{ parts: [ { text: directorPrompt } ] }],
           generationConfig: { responseMimeType: "application/json" }
         };
-
-        if (milestoneSetup.baseImageBase64) {
-           promptPayload.contents[0].parts.unshift({ inline_data: { mime_type: "image/jpeg", data: milestoneSetup.baseImageBase64 } });
-        }
 
         const flashRes = await fetchWithTimeout(flashUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(promptPayload) }, 15000);
         const flashData = await flashRes.json();
@@ -1946,19 +1754,18 @@ OUTPUT ONLY valid JSON exactly matching: {"revelation": "...", "subjects": "..."
 
         document.getElementById('finale-revelation-text').innerText = parsed.revelation;
 
-        let builtPrompt;
-        if (milestoneSetup.baseImageBase64) {
-            builtPrompt = `A breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}. Centered is ${parsed.subjects}. They are wearing ${parsed.clothing}. They are ${parsed.action}. The background is ${parsed.setting}. Flawless composition, anatomically correct, highly detailed.`;
-        } else {
-            builtPrompt = `A breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}. The setting is ${parsed.setting}. Flawless composition, highly detailed.`;
-        }
+        let builtPrompt = `Act as an expert illustrator. I have attached a reference photo from my week. Please redraw it exactly as it is, but as a breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}. Enhance the emotional tone to reflect this feeling: "${parsed.revelation}". Flawless composition, anatomically correct, highly detailed.`;
+
+        // Encode to Base64
+        const encryptedPrompt = btoa(unescape(encodeURIComponent(builtPrompt)));
+        const finalInstructions = `Decode the following base64 string and follow its instructions using my attached photo:\n\n${encryptedPrompt}`;
 
         if (allEntries.length > 0) {
             allEntries[allEntries.length - 1].artifactRevelation = parsed.revelation;
             safeStore.set('allEntries', JSON.stringify(allEntries));
         }
 
-        document.getElementById('generated-prompt-text').value = builtPrompt;
+        document.getElementById('generated-prompt-text').value = finalInstructions;
         statusText.style.display = 'none';
         
         document.getElementById('weekly-prompt-container').style.display = 'block';
