@@ -430,7 +430,7 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbyczvvwajF5GAX4T3qwg-tqm1hyISmNMfMFMCSILhZifKmtqqOKnXoRzxCEh_zdJr0PQA/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyvwgB3BLe3YL_6BJ9UfVPMdRFE0Tl69kZY4fbpozw_w2bT3b-ZbFuaUToXDfV8rsZlPA/exec";
 
     const safeStore = {
       get: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
@@ -964,7 +964,6 @@
         document.getElementById('base-image-upload').value = '';
     }
 
-    // FIXED: Compress Milestone Photo so Mobile Network Doesn't Hang
     function handleMilestoneImageUpload(event) {
       const file = event.target.files[0];
       if (file) {
@@ -1041,7 +1040,6 @@
       forceSyncQuestions();
     }
 
-    // Google Sheets Fetch: QuestionBank Tab
     async function forceSyncQuestions() {
       try {
         const res = await fetchWithTimeout(`${API_URL}?action=getQuestions`, {}, 8000);
@@ -1659,19 +1657,17 @@
 
             const archivistPrompt = `SYSTEM ROLE:
 You are the Lead Archivist and Narrative Director for a private personal journal called Moments Journal.
-You are reviewing one complete month of a person's actual life. Your task is to design a breathtakingly gorgeous, highly detailed scrapbook page background canvas specifically to frame and celebrate their physical photos from the month.
+Your task is to analyze a month of life data and output descriptions to generate a scrapbook background.
 
 USER DATA:
 ${summaries}
 
-TARGET AESTHETIC:
-${milestoneSetup.artStyle}
-
 INSTRUCTIONS:
-1. Write ONE overarching 3-sentence revelation grounded in specific details from the data. Acknowledge contradictions and major emotional shifts. Avoid generic therapy-speak or clichés. Output this in the "revelation" property.
-2. Write a 40-word maximum image prompt specifically for a background canvas. Output this in the "imagePrompt" property.
-3. The imagePrompt MUST begin exactly with: 'A breathtakingly gorgeous, high-quality scrapbook page background canvas in the aesthetic of ${milestoneSetup.artStyle}, featuring...' 
-4. CRITICAL COLLAGE RULE: The absolute center of the image MUST be left completely empty, clean, beautifully lit negative space (e.g., clean paper, clear glass, empty canvas) specifically to hold other overlaid photos. Do NOT place people, faces, or major focal objects in the center. All detailed patterns, autumn leaves, washi tape, and texture must only hug the outer edges of the frame to create border interest. Output ONLY valid JSON matching: {"revelation": "...", "imagePrompt": "..."}`;
+1. Write ONE overarching 3-sentence revelation grounded in specific details from the data. Acknowledge contradictions and major emotional shifts. Avoid clichés. Output this in "revelation".
+2. Write a description of scrapbook border textures (e.g., "hand-painted pressed autumn leaves, soft pastel washi tape, and vintage watercolor paper grain"). Output in "border_texture".
+3. Write the mood of the month in 3-5 words. Output in "mood".
+
+OUTPUT ONLY valid JSON matching: {"revelation": "...", "border_texture": "...", "mood": "..."}`;
 
             let promptPayload = {
               contents: [{ parts: [{ text: archivistPrompt }] }],
@@ -1687,9 +1683,11 @@ INSTRUCTIONS:
             document.getElementById('finale-revelation-text').innerText = parsed.revelation;
             statusText.innerText = "Painting your atmospheric background frame...";
 
-            const safePrompt = encodeURIComponent(parsed.imagePrompt);
+            let builtPrompt = `A breathtakingly gorgeous, high-quality scrapbook page background canvas in the aesthetic of ${milestoneSetup.artStyle}. The outer edges of the canvas are highly textured with ${parsed.border_texture}, reflecting a mood of ${parsed.mood}. The absolute center of the image is left completely empty with beautiful, clean negative space. No people, no faces. Warm aesthetic studio lighting, 8k resolution, highly detailed.`;
+            
+            const safePrompt = encodeURIComponent(builtPrompt);
             const dynamicSeed = Math.floor(Math.random() * 1000000);
-            const bgUrl = `https://image.pollinations.ai/prompt/${safePrompt}?width=1024&height=1024&nologo=true&enhance=false&seed=${dynamicSeed}`;
+            const bgUrl = `https://image.pollinations.ai/prompt/${safePrompt}?width=1024&height=1024&nologo=true&enhance=false&model=flux&seed=${dynamicSeed}`;
 
             statusText.innerText = "Programmatically compositioning all monthly photos into the archive frame...";
             
@@ -1856,22 +1854,23 @@ INSTRUCTIONS:
         const flashUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
         
         const directorPrompt = `SYSTEM ROLE:
-You are the Visual Memory Director for a private personal journal called Moments Journal.
-You are reviewing a person's life data to design a deeply cherished, absolute high-budget visual masterpiece.
+You are the Visual Memory Director for a private personal journal.
+Your task is to analyze user data and a reference photo to output precise physical descriptions for an image generator.
 
 USER DATA:
 ${summaries}
 
-CHOSEN AESTHETIC:
-${milestoneSetup.artStyle}
-
 INSTRUCTIONS:
-1. Write ONE 3-sentence revelation grounded in their actual data. Acknowledge contradictions and avoid therapy-speak, generic gratitude, and clichés. Output this in the "revelation" property.
-2. Write a highly detailed prompt (approx. 100-150 words) for an image generator. Output this in the "imagePrompt" property.
-3. IF A PHOTO IS PROVIDED: You MUST perform an absolute computer vision extraction of the EXACT features (e.g., precise skin tone, hair color/texture, facial hair, glasses shape, precise clothing colors/patterns, ages, specific poses, relationships) from the reference photo and convert them directly into stunning, high-budget, anatomically correct characters perfectly matched to the chosen ${milestoneSetup.artStyle} aesthetic. 
-4. CRITICAL: PRESERVE EXACT ETHNICITY, AGE, AND GENDER. Do not whitewash or make the subjects generic. Every character, face, and clothing item must be rigorously tied to the photo constraint.
-5. IF NO PHOTO IS PROVIDED: Create a breathtakingly gorgeous, highly detailed environment or symbolic visualization based on the text data in the ${milestoneSetup.artStyle} aesthetic.
-6. The imagePrompt MUST begin exactly with: 'A breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}, featuring...' Output ONLY valid JSON matching: {"revelation": "...", "imagePrompt": "..."}`;
+1. Write ONE 3-sentence revelation grounded in their actual data. Avoid therapy-speak and cliches. Put this in "revelation".
+2. IF A PHOTO IS PROVIDED: Perform an absolute computer vision extraction of the exact features from the reference photo. You must output 4 specific properties:
+   - "subjects": Exact skin tone, hair color/texture, facial hair, glasses, ages, and relationships. (Note: If a toddler girl is present, describe her as having thin, slightly curly hair).
+   - "clothing": Precise colors, fabrics, and patterns of the garments.
+   - "action": Specific poses and interactions.
+   - "setting": The background environment.
+   CRITICAL: PRESERVE EXACT ETHNICITY, AGE, AND GENDER. Do not whitewash.
+3. IF NO PHOTO IS PROVIDED: Put "None" in subjects, clothing, and action. Put a gorgeous environment description in "setting".
+
+OUTPUT ONLY valid JSON exactly matching: {"revelation": "...", "subjects": "...", "clothing": "...", "action": "...", "setting": "..."}`;
 
         let promptPayload = {
           contents: [{ parts: [ { text: directorPrompt } ] }],
@@ -1891,9 +1890,16 @@ INSTRUCTIONS:
         document.getElementById('finale-revelation-text').innerText = parsed.revelation;
         statusText.innerText = "Rendering artifact canvas...";
 
-        const safePrompt = encodeURIComponent(parsed.imagePrompt);
+        let builtPrompt;
+        if (milestoneSetup.baseImageBase64) {
+            builtPrompt = `A breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}. Centered is ${parsed.subjects}. They are wearing ${parsed.clothing}. They are ${parsed.action}. The background is ${parsed.setting}. Flawless composition, anatomically correct, highly detailed.`;
+        } else {
+            builtPrompt = `A breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}. The setting is ${parsed.setting}. Flawless composition, highly detailed.`;
+        }
+
+        const safePrompt = encodeURIComponent(builtPrompt);
         const dynamicSeed = Math.floor(Math.random() * 1000000);
-        const imageUrl = `https://image.pollinations.ai/prompt/${safePrompt}?width=1024&height=1024&nologo=true&enhance=false&seed=${dynamicSeed}`;
+        const imageUrl = `https://image.pollinations.ai/prompt/${safePrompt}?width=1024&height=1024&nologo=true&enhance=false&model=flux&seed=${dynamicSeed}`;
 
         if (allEntries.length > 0) {
             allEntries[allEntries.length - 1].artifactUrl = imageUrl;
