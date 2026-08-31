@@ -1941,4 +1941,107 @@ OUTPUT ONLY valid JSON exactly matching: {"revelation": "...", "subjects": "..."
         const flashRes = await fetchWithTimeout(flashUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(promptPayload) }, 15000);
         const flashData = await flashRes.json();
         let aiText = flashData.candidates[0].content.parts[0].text;
-        aiText = aiText.replace(/```json/gi, '').replace(/
+        aiText = aiText.replace(/```json/gi, '').replace(/```/gi, '').trim();
+        const parsed = JSON.parse(aiText);
+
+        document.getElementById('finale-revelation-text').innerText = parsed.revelation;
+
+        let builtPrompt;
+        if (milestoneSetup.baseImageBase64) {
+            builtPrompt = `A breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}. Centered is ${parsed.subjects}. They are wearing ${parsed.clothing}. They are ${parsed.action}. The background is ${parsed.setting}. Flawless composition, anatomically correct, highly detailed.`;
+        } else {
+            builtPrompt = `A breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}. The setting is ${parsed.setting}. Flawless composition, highly detailed.`;
+        }
+
+        if (allEntries.length > 0) {
+            allEntries[allEntries.length - 1].artifactRevelation = parsed.revelation;
+            safeStore.set('allEntries', JSON.stringify(allEntries));
+        }
+
+        document.getElementById('generated-prompt-text').value = builtPrompt;
+        statusText.style.display = 'none';
+        
+        document.getElementById('weekly-prompt-container').style.display = 'block';
+        document.getElementById('weekly-upload-container').style.display = 'block';
+        
+        const advBtn = document.getElementById('milestone-advance-btn');
+        advBtn.innerText = "Waiting for upload...";
+        advBtn.disabled = true; 
+        document.getElementById('finale-buttons').style.display = 'flex';
+
+      } catch (err) { 
+        statusText.innerText = "Error analyzing data. Please try again or skip."; 
+        const advBtn = document.getElementById('milestone-advance-btn');
+        advBtn.innerText = "Continue Journey";
+        advBtn.disabled = false;
+        advBtn.onclick = function() { triggerHaptic(); finishMilestone(); };
+        document.getElementById('finale-buttons').style.display = 'flex'; 
+      }
+    }
+
+    function generateMilestone() {
+      let todayDate = new Date(startDate);
+      todayDate.setDate(startDate.getDate() + (currentDay - 1));
+      let tomorrow = new Date(todayDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      let isEndOfMonth = tomorrow.getDate() === 1;
+
+      if (isEndOfMonth) {
+          generateMonthlyCollage();
+      } else {
+          generateWeeklyMilestone();
+      }
+    }
+
+    function finishMilestone() {
+      currentDay++;
+      safeStore.set('currentDay', currentDay);
+      milestoneSetup.baseImageBase64 = '';
+      document.getElementById('preview-image').src = '';
+      document.getElementById('preview-image').style.display = 'none';
+      document.getElementById('generated-milestone-img').style.display = 'none';
+      document.getElementById('image-display-container').style.display = 'none';
+      document.getElementById('finale-buttons').style.display = 'none';
+      document.getElementById('weekly-prompt-container').style.display = 'none';
+      document.getElementById('weekly-upload-container').style.display = 'none';
+      document.getElementById('finale-revelation-text').innerText = '';
+      
+      document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork();
+      
+      buildDashboard();
+      showScreen('screen-dashboard');
+    }
+
+    window.addEventListener('load', async function() {
+      try {
+        const hasMasterAccess = safeStore.get('master_access');
+        const localPin = safeStore.get('local_pin');
+        const setupStr = safeStore.get('journalSetup');
+        const savedDay = safeStore.get('currentDay');
+        const savedStart = safeStore.get('startDate');
+        
+        if (savedDay) currentDay = parseInt(savedDay);
+        if (savedStart) startDate = new Date(savedStart);
+
+        await asyncGetQuestionBank();
+
+        if (hasMasterAccess === 'true' || safeStore.get('dev_mode') === 'true') {
+          isDevMode = safeStore.get('dev_mode') === 'true'; 
+          
+          if (localPin || isDevMode) {
+              if (isDevMode && setupStr) {
+                  document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork();
+              }
+              showScreen('screen-local-lock');
+          } else {
+              showScreen('screen-pin-setup');
+          }
+        } else { 
+            showScreen('screen-master-lock'); 
+        }
+      } catch (e) { console.error("BOOTERROR:", e); showScreen('screen-master-lock'); }
+    });
+  </script>
+</body>
+</html>
