@@ -964,38 +964,39 @@
         document.getElementById('base-image-upload').value = '';
     }
 
+    // FIXED: Compress Milestone Photo so Mobile Network Doesn't Hang
     function handleMilestoneImageUpload(event) {
       const file = event.target.files[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 800;
-          const MAX_HEIGHT = 800;
-          let width = img.width;
-          let height = img.height;
-          
-          if (width > height && width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-          else if (height > MAX_WIDTH) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-          
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-          milestoneSetup.baseImageBase64 = dataUrl.split(',')[1];
-          
-          document.getElementById('preview-image').src = dataUrl;
-          document.getElementById('preview-image').style.display = 'block';
-          document.querySelectorAll('.gallery-thumbnail').forEach(el => el.classList.remove('selected'));
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800;
+            const MAX_HEIGHT = 800;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > height && width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+            else if (height > MAX_WIDTH) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+            
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+            milestoneSetup.baseImageBase64 = dataUrl.split(',')[1];
+            
+            document.getElementById('preview-image').src = dataUrl;
+            document.getElementById('preview-image').style.display = 'block';
+            document.querySelectorAll('.gallery-thumbnail').forEach(el => el.classList.remove('selected'));
+          };
+          img.src = e.target.result;
         };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      }
     }
 
     function handleDailyImageUpload(event) {
@@ -1457,17 +1458,24 @@
         const response = await fetchWithTimeout(`${API_URL}?action=getBingoQuestions`, {}, 8000);
         const data = await response.json();
         if (data && Array.isArray(data) && data.length > 0 && !data.error) {
-          prompts = data.map(q => q.text);
+          prompts = data.map(item => {
+              if (typeof item === 'string') return item;
+              if (item.text) return item.text;
+              return Object.values(item)[0]; 
+          }).filter(Boolean);
           safeStore.set('cachedBingo', JSON.stringify(prompts));
         }
       } catch (err) {
         let cached = safeStore.get('cachedBingo');
-        if (cached) { try { prompts = JSON.parse(cached); } catch(e){} }
+        if (cached) { try { let parsed = JSON.parse(cached); if(parsed.length > 0) prompts = parsed; } catch(e){} }
       }
 
       grid.innerHTML = '';
       
-      prompts.slice(0, 9).forEach((text, idx) => {
+      const shuffledPrompts = prompts.sort(() => 0.5 - Math.random());
+      const selectedPrompts = shuffledPrompts.slice(0, 9);
+      
+      selectedPrompts.forEach((text, idx) => {
         let tile = document.createElement('div');
         tile.className = 'bingo-tile';
         tile.dataset.index = idx;
@@ -1813,7 +1821,7 @@ OUTPUT ONLY valid JSON exactly matching: {"revelation": "...", "imagePrompt": ".
         
         const directorPrompt = `SYSTEM ROLE:
 You are the Visual Memory Director for a private personal journal.
-You are reviewing one complete week of a person's life to design a visual painting.
+You are reviewing a person's life data to design a visual painting.
 
 USER DATA:
 ${summaries}
@@ -1823,8 +1831,10 @@ ${milestoneSetup.artStyle}
 
 INSTRUCTIONS:
 1. Write ONE 3-sentence revelation grounded in their actual data. Avoid therapy-speak and cliches.
-2. Write a max 60-word prompt for an image generator. It MUST begin exactly with: 'A breathtakingly beautiful, vibrant, and lush illustration in the aesthetic of ${milestoneSetup.artStyle}, featuring...' Focus heavily on gorgeous scenery, warm glowing lighting, and cozy, aesthetically pleasing environments.
-3. CRITICAL HUMAN FIGURES RULE: Human faces must never be the visual focus. Do not describe facial features, eyes, expressions, or close-ups.
+2. Write a max 60-word prompt for an image generator. 
+3. IF A PHOTO IS PROVIDED: You MUST describe the EXACT people, poses, clothing, and setting in the photo (e.g., "a father sitting on a couch holding a toddler wearing a knit hat"). Do NOT ignore the people. Transform them into the requested aesthetic.
+4. IF NO PHOTO IS PROVIDED: Create a cozy, beautiful environment based on the text data.
+5. The prompt MUST begin exactly with: 'An artwork in the style of ${milestoneSetup.artStyle}, featuring...'
 
 OUTPUT ONLY valid JSON exactly matching: {"revelation": "...", "imagePrompt": "..."}`;
 
