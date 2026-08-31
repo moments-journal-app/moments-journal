@@ -27,10 +27,6 @@
     .theme-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     .theme-dot.active { border-color: var(--text-main); transform: scale(1.2); }
 
-    .gallery-container { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; margin-bottom: 1.5rem; scroll-snap-type: x mandatory; }
-    .gallery-thumbnail { width: 80px; height: 80px; flex-shrink: 0; border-radius: 8px; object-fit: cover; cursor: pointer; border: 3px solid transparent; opacity: 0.6; transition: all 0.2s ease; scroll-snap-align: center; }
-    .gallery-thumbnail.selected { border-color: var(--ink-color); opacity: 1; transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-
     .lock-screen-container { justify-content: center; align-items: center; padding: 1.5rem; display: flex; flex-direction: column; width: 100%; }
     .passcode-input, .api-input { width: 100%; max-width: 300px; padding: 0.8rem; text-align: center; font-size: 1.1rem; border: 2px solid var(--border-light); border-radius: 10px; margin-bottom: 1rem; background: rgba(255,255,255,0.9); transition: border-color 0.2s; }
     .passcode-input { letter-spacing: 2px; text-transform: uppercase; font-weight: bold; }
@@ -179,26 +175,19 @@
     </div>
   </div>
 
-  <!-- INITIAL MASTER LOCK SCREEN -->
   <div id="screen-master-lock" class="screen active">
     <div class="lock-screen-container">
         <h1>Moments Journal</h1>
         <p class="subtitle">Enter your Invite Code and Gemini API Key to authorize this device.</p>
         <div id="master-error-msg" class="error-msg"></div>
-        
         <input type="text" id="master-code-input" class="passcode-input" placeholder="INVITE CODE">
-        
         <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; text-align: left; width: 100%; max-width: 300px;">The journal runs on your free personal AI connection.</p>
         <div style="position: relative; width: 100%; max-width: 300px; margin-bottom: 1rem;">
           <input type="password" id="master-api-input" class="api-input" placeholder="Paste your API Key here" style="margin-bottom: 0;">
           <button type="button" id="toggle-api-visibility" onclick="toggleApiKeyVisibility()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--text-muted);" title="Show/Hide API Key">👁️</button>
         </div>
-        
         <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--ink-color); font-weight: 600; text-decoration: none; font-size: 0.85rem; margin-bottom: 1rem;">🔑 Get Free API Key Here</a>
-        
         <button class="btn" id="master-unlock-btn" onclick="triggerHaptic(); verifyMasterCode()" style="max-width: 300px; margin-bottom: 0.5rem;">Authorize Vault</button>
-
-        <!-- Prominently Visible Backup Upload Section -->
         <div style="width: 100%; max-width: 300px; border-top: 1px dashed var(--border-light); padding-top: 1rem; margin-top: 0.5rem; text-align: center;">
           <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;">Already have a backup file?</p>
           <input type="file" id="master-import-file" style="display: none;" accept=".json" onchange="importVault(event)">
@@ -217,7 +206,6 @@
     </div>
   </div>
 
-  <!-- SUBSEQUENT LOGIN SCREEN -->
   <div id="screen-local-lock" class="screen">
     <div class="lock-screen-container">
         <h1>Moments Journal</h1>
@@ -225,8 +213,6 @@
         <div id="local-error-msg" class="error-msg"></div>
         <input type="password" id="local-pin-input" class="passcode-input" placeholder="••••" maxlength="4" pattern="\d*">
         <button class="btn" id="local-unlock-btn" onclick="triggerHaptic(); unlockWithPin()" style="max-width: 300px;">Unlock Vault</button>
-        
-        <!-- Prominently Visible Backup Upload Section for Returning Users -->
         <div style="width: 100%; max-width: 300px; border-top: 1px dashed var(--border-light); padding-top: 1rem; margin-top: 1.5rem; text-align: center;">
           <input type="file" id="local-import-file" style="display: none;" accept=".json" onchange="importVault(event)">
           <button class="btn vault-btn" style="width: 100%; margin-top: 0;" onclick="triggerHaptic(); document.getElementById('local-import-file').click();">📁 Upload & Restore Backup</button>
@@ -238,14 +224,12 @@
     <div style="position: relative; z-index: 1; margin: 0 auto; max-width: 450px; text-align: center; padding: 1.5rem; padding-bottom: 4rem;">
       <h1>Design Your Vault</h1>
       <p class="subtitle" style="margin-bottom: 2rem;">Choose your aesthetic to complete setup.</p>
-      
       <div class="section-title">1. Gender Alignment</div>
       <div class="toggle-group" id="genderPicker" style="margin-bottom: 1.5rem;">
         <button class="toggle-btn selected" onclick="triggerHaptic(); selectSetupOption('genderPicker', this, 'Female')">Female</button>
         <button class="toggle-btn" onclick="triggerHaptic(); selectSetupOption('genderPicker', this, 'Male')">Male</button>
         <button class="toggle-btn" onclick="triggerHaptic(); selectSetupOption('genderPicker', this, 'Neutral')">Neutral</button>
       </div>
-
       <div class="section-title">2. Color Theme</div>
       <div class="toggle-group" id="themePicker" style="margin-bottom: 2rem;">
         <button class="toggle-btn selected" onclick="triggerHaptic(); selectThemeOption(this, '#d97757', '#fcf4f1')">Terracotta</button>
@@ -253,31 +237,25 @@
         <button class="toggle-btn" onclick="triggerHaptic(); selectThemeOption(this, '#5b7c99', '#f2f6f9')">Ocean</button>
         <button class="toggle-btn" onclick="triggerHaptic(); selectThemeOption(this, '#9b7e9a', '#f9f2f8')">Lavender</button>
       </div>
-
       <button class="btn" style="margin-top: 1rem;" onclick="triggerHaptic(); completeOnboarding()">Begin Your Journey</button>
     </div>
   </div>
 
   <div id="screen-dashboard" class="screen">
     <div style="position: relative; z-index: 1; text-align: center; width: 100%; padding-top: 0.5rem;">
-      
       <div class="theme-row" id="dashboard-theme-swapper">
           <div class="theme-dot active" style="background: #d97757;" onclick="triggerHaptic(); setAppTheme(this, '#d97757', '#fcf4f1')"></div>
           <div class="theme-dot" style="background: #4a7c59;" onclick="triggerHaptic(); setAppTheme(this, '#4a7c59', '#f1f8f4')"></div>
           <div class="theme-dot" style="background: #5b7c99;" onclick="triggerHaptic(); setAppTheme(this, '#5b7c99', '#f2f6f9')"></div>
           <div class="theme-dot" style="background: #9b7e9a;" onclick="triggerHaptic(); setAppTheme(this, '#9b7e9a', '#f9f2f8')"></div>
       </div>
-
       <h1>Moments Journal</h1>
       <p class="subtitle" style="margin-bottom: 1.5rem;" id="date-display">A quiet archive of your passing days.</p>
-      
-      <!-- ONLY ONE SET OF ACTION BUTTONS HERE -->
       <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap;">
         <button onclick="triggerHaptic(); exportVault()" style="background: transparent; color: var(--ink-color); border: 1px solid var(--ink-color); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">⬇ Backup</button>
         <button onclick="triggerHaptic(); openArchiveModal()" style="background: transparent; color: var(--ink-color); border: 1px solid var(--ink-color); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">📚 Archives</button>
         <button onclick="triggerHaptic(); resetApp()" style="background: transparent; color: #e53e3e; border: 1px solid #e53e3e; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">⚠️ Reset App</button>
       </div>
-      
       <div id="journey-map-container" style="text-align: left; max-width: 600px; margin: 0 auto;"></div>
     </div>
   </div>
@@ -316,31 +294,23 @@
     </div>
   </div>
 
-  <!-- SUNDAY BINGO SCREEN -->
   <div id="screen-sunday-bingo" class="screen">
     <div style="position: relative; z-index: 1; width: 100%; max-width: 450px; margin: 0 auto; padding: 2rem 1.5rem; text-align: center;">
       <h1 style="color: var(--ink-color);">Sunday Bingo</h1>
       <p class="subtitle">Tap the moments that shaped your week to complete your board.</p>
-      
-      <div id="bingo-board-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 2rem;">
-        <!-- Generated dynamically via JS -->
-      </div>
-
+      <div id="bingo-board-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 2rem;"></div>
       <button class="btn" id="bingo-continue-btn" onclick="triggerHaptic(); completeSundayBingo()" style="max-width: 100%;">Continue to Check-in</button>
     </div>
   </div>
 
-  <!-- BINGO SCORE & VERDICT REVEAL SCREEN -->
   <div id="screen-bingo-reveal" class="screen">
     <div style="position: relative; z-index: 1; width: 100%; max-width: 450px; margin: 0 auto; padding: 3rem 1.5rem; text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 85vh;">
       <div style="font-size: 3rem; margin-bottom: 0.5rem;">🌟</div>
       <h1 style="color: var(--ink-color);">Your Weekly Bingo Score</h1>
       <p class="subtitle" id="bingo-score-display" style="font-size: 1.2rem; font-weight: bold; margin-bottom: 1.5rem;"></p>
-      
       <div style="background: white; padding: 2rem; border-radius: 16px; border: 2px dashed var(--ink-color); margin-bottom: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
         <p id="bingo-verdict-text" style="font-size: 1.15rem; font-style: italic; line-height: 1.6; color: var(--text-main); margin: 0;"></p>
       </div>
-
       <button class="btn" onclick="triggerHaptic(); proceedToWeeklyCheckin()" style="max-width: 100%;">Continue to Check-in</button>
     </div>
   </div>
@@ -349,7 +319,6 @@
     <div style="position: relative; z-index: 1; width: 100%; padding-top: 2rem;">
       <h1 style="color: var(--ink-color);">Sunday Check-in</h1>
       <p class="subtitle">A moment to reflect on your week.</p>
-      
       <div class="review-container">
         <div class="section-title">How was your week overall?</div>
         <div class="toggle-group" id="week-rating-score" style="margin-bottom: 1.5rem;">
@@ -359,7 +328,6 @@
           <button class="toggle-btn" onclick="triggerHaptic(); selectReviewScore('week-rating-score', '4')">4</button>
           <button class="toggle-btn" onclick="triggerHaptic(); selectReviewScore('week-rating-score', '5')">5</button>
         </div>
-
         <div class="section-title">Has this vault been helpful?</div>
         <div class="toggle-group" id="app-rating-score" style="margin-bottom: 2rem;">
           <button class="toggle-btn" onclick="triggerHaptic(); selectReviewScore('app-rating-score', '1')">1</button>
@@ -368,12 +336,10 @@
           <button class="toggle-btn" onclick="triggerHaptic(); selectReviewScore('app-rating-score', '4')">4</button>
           <button class="toggle-btn" onclick="triggerHaptic(); selectReviewScore('app-rating-score', '5')">5</button>
         </div>
-
         <div class="section-title">The Time Capsule</div>
         <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: -8px;">Write one gentle reminder for your future self. We will safely reveal it next week.</p>
         <textarea id="time-capsule-input" class="journal-input" rows="3" placeholder="A note for next week..."></textarea>
       </div>
-
       <button class="btn" id="submit-review-btn" style="margin-top: 2rem; max-width: 400px; display: block; margin-left: auto; margin-right: auto;" onclick="triggerHaptic(); submitWeeklyReview()">Seal & Proceed</button>
     </div>
   </div>
@@ -383,7 +349,7 @@
       <h1 id="milestone-setup-title">Weekly Artifact</h1>
       <p class="subtitle" id="milestone-setup-subtitle">Choose your aesthetic.</p>
       
-      <!-- REMOVED: In-app Reference Photo upload to force manual Gemini Upload via Base64 -->
+      <!-- ENTIRE IMAGE UPLOAD / GALLERY UI REMOVED -->
 
       <div class="section-title">Choose Art Style</div>
       <div class="toggle-group" id="stylePicker" style="margin-bottom: 1.5rem; justify-content: center;">
@@ -417,7 +383,6 @@
           <input type="file" id="gemini-image-upload" accept="image/*" class="journal-input" onchange="handleGeminiUpload(event)">
       </div>
       
-      <!-- FIXED CONTAINER STYLING SO IMAGE STAYS CENTERED & NEVER MOVES TO BG -->
       <div id="image-display-container" style="display:none; background: rgba(255,255,255,0.9); padding: 15px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 1.5rem; width: 100%; justify-content: center; align-items: center;">
         <img id="generated-milestone-img" class="generated-img" src="" alt="Milestone Artwork" crossorigin="anonymous" style="display: none; max-width: 100%; height: auto; border-radius: 8px;">
       </div>
@@ -452,7 +417,6 @@
     let tempAppRating = '3';
     let currentSundayBingoSelections = [];
 
-    // Helper: Timeout fetch to prevent hangs
     async function fetchWithTimeout(url, options = {}, timeout = 6000) {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
@@ -1731,7 +1695,7 @@
         
         const directorPrompt = `SYSTEM ROLE:
 You are the Visual Memory Director for a private personal journal.
-Your task is to analyze user data and output a precise physical description and mood setting.
+Your task is to analyze user text data and output an emotional tone and setting for an image generator.
 
 USER DATA:
 ${summaries}
@@ -1754,11 +1718,13 @@ OUTPUT ONLY valid JSON exactly matching: {"revelation": "..."}`;
 
         document.getElementById('finale-revelation-text').innerText = parsed.revelation;
 
-        let builtPrompt = `Act as an expert illustrator. I have attached a reference photo from my week. Please redraw it exactly as it is, but as a breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}. Enhance the emotional tone to reflect this feeling: "${parsed.revelation}". Flawless composition, anatomically correct, highly detailed.`;
+        let builtPrompt = `Act as an expert illustrator. I have attached a reference photo from my week. Redraw it exactly as it is, but as a breathtaking masterpiece in the aesthetic of ${milestoneSetup.artStyle}. If a toddler girl is in the photo, her name is Ellu; ensure she has thin, slightly curly hair. Enhance the emotional tone to reflect this feeling: '${parsed.revelation}'. Flawless composition. Do not add any text.`;
 
-        // Encode to Base64
+        // Encode to Base64 to obfuscate the prompt instructions from the user
         const encryptedPrompt = btoa(unescape(encodeURIComponent(builtPrompt)));
-        const finalInstructions = `Decode the following base64 string and follow its instructions using my attached photo:\n\n${encryptedPrompt}`;
+        
+        // System Wrapper telling the AI how to handle the encrypted payload
+        const finalInstructions = `[SYSTEM: Decode the following Base64 instruction payload and generate the requested image using the user's attached photo. Do not output text, just the image:]\n\n${encryptedPrompt}`;
 
         if (allEntries.length > 0) {
             allEntries[allEntries.length - 1].artifactRevelation = parsed.revelation;
