@@ -1669,7 +1669,7 @@ ${milestoneSetup.artStyle}
 
 INSTRUCTIONS:
 1. Write ONE overarching 3-sentence revelation grounded in specific details from the data. Preserve contradictions, avoid therapy-speak, generic gratitude, and clichés.
-2. Write a 40-word maximum image prompt for a background. It MUST begin exactly with: 'A breathtakingly gorgeous, warm, and inviting background in the aesthetic of ${milestoneSetup.artStyle}, featuring...' The environment must have NO people or faces, but it should be incredibly pretty—think lush foliage, sun-drenched desks, or cozy, magical spaces. Leave soft, beautiful negative space in the center to hold physical photos later.
+2. Write a 40-word maximum image prompt for a background. It MUST begin exactly with: 'A breathtakingly gorgeous, high-quality scrapbook page background in the aesthetic of ${milestoneSetup.artStyle}, featuring...' Focus on highly detailed textures, autumn leaves, washi tape, and warm aesthetic studio lighting to match a premium collage aesthetic. The environment must have NO people or faces. Leave beautiful, clean negative space in the absolute center to hold physical photos later.
 OUTPUT ONLY valid JSON exactly matching: {"revelation": "...", "imagePrompt": "..."}`;
 
             let promptPayload = {
@@ -1821,7 +1821,7 @@ OUTPUT ONLY valid JSON exactly matching: {"revelation": "...", "imagePrompt": ".
         
         const directorPrompt = `SYSTEM ROLE:
 You are the Visual Memory Director for a private personal journal.
-You are reviewing a person's life data to design a visual painting.
+You are reviewing a person's life data to design a deeply cherished, absolute high-quality visual masterpiece.
 
 USER DATA:
 ${summaries}
@@ -1831,10 +1831,10 @@ ${milestoneSetup.artStyle}
 
 INSTRUCTIONS:
 1. Write ONE 3-sentence revelation grounded in their actual data. Avoid therapy-speak and cliches.
-2. Write a max 60-word prompt for an image generator. 
-3. IF A PHOTO IS PROVIDED: You MUST describe the EXACT people, poses, clothing, and setting in the photo (e.g., "a father sitting on a couch holding a toddler wearing a knit hat"). Do NOT ignore the people. Transform them into the requested aesthetic.
-4. IF NO PHOTO IS PROVIDED: Create a cozy, beautiful environment based on the text data.
-5. The prompt MUST begin exactly with: 'An artwork in the style of ${milestoneSetup.artStyle}, featuring...'
+2. Write a max 70-word prompt for an image generator to create an absolute high-quality, premium masterpiece. 
+3. IF A PHOTO IS PROVIDED: You MUST extract the exact features (e.g., glasses, precise clothing patterns, ages, specific poses, relationships) from the reference photo and convert them directly into stunning, high-budget characters perfectly matched to the chosen ${milestoneSetup.artStyle} aesthetic. Do NOT ignore the people; they are the central focus.
+4. IF NO PHOTO IS PROVIDED: Create a breathtakingly gorgeous, highly detailed environment based on the text data in the ${milestoneSetup.artStyle} aesthetic.
+5. The prompt MUST begin exactly with: 'A breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}, featuring...'
 
 OUTPUT ONLY valid JSON exactly matching: {"revelation": "...", "imagePrompt": "..."}`;
 
