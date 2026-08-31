@@ -103,7 +103,7 @@
     .journal-content { padding: 1rem 1.2rem 6rem 1.2rem; max-width: 800px; margin: 0 auto; width: 100%; }
     .question-block { margin-bottom: 1.5rem; }
     .question-text { font-size: 1rem; font-weight: 500; margin-bottom: 0.6rem; line-height: 1.4; text-align: center;}
-    textarea, input[type="text"].journal-input { width: 100%; border: 1px solid var(--border-light); border-radius: 10px; padding: 0.8rem; font-size: 0.95rem; background: rgba(255,255,255,0.9); resize: none; transition: border-color 0.2s; }
+    textarea, input[type="text"].journal-input, input[type="file"].journal-input { width: 100%; border: 1px solid var(--border-light); border-radius: 10px; padding: 0.8rem; font-size: 0.95rem; background: rgba(255,255,255,0.9); resize: none; transition: border-color 0.2s; }
     textarea:focus, input[type="text"].journal-input:focus { outline: none; border-color: var(--ink-color); }
     .toggle-group { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center;}
     .toggle-btn { flex: 1; padding: 0.6rem; border: 1px solid var(--border-light); border-radius: 8px; background: white; font-weight: 600; color: var(--text-main); cursor: pointer; transition: all 0.2s; font-size: 0.9rem;}
@@ -133,7 +133,7 @@
     #screen-weekly-review .toggle-btn { flex: 0 0 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; padding: 0; }
 
     .milestone-screen { justify-content: flex-start; align-items: center; padding: 1.5rem; overflow-y: auto; text-align: center;}
-    .generated-img { width: 100%; max-width: 450px; max-height: 450px; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-bottom: 1.5rem; display: none; background: white; padding: 10px; }
+    .generated-img { width: 100%; max-width: 450px; max-height: 600px; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-bottom: 1.5rem; display: none; background: white; padding: 10px; }
     .finale-revelation { font-size: 1.1rem; line-height: 1.6; color: var(--text-main); margin-bottom: 2rem; font-style: italic; max-width: 600px; padding: 0 10px;}
     
     .file-upload-wrapper { position: relative; width: 100%; max-width: 400px; margin: 0 auto;}
@@ -406,7 +406,7 @@
         <button class="toggle-btn" onclick="selectStyleOption(this, 'Retro 80s Anime')">80s Anime</button>
       </div>
 
-      <button class="btn" style="margin-top: 1rem;" onclick="triggerHaptic(); generateMilestone()">Decode & Paint Artifact</button>
+      <button class="btn" style="margin-top: 1rem;" onclick="triggerHaptic(); generateMilestone()">Decode & Prep Prompt</button>
     </div>
   </div>
 
@@ -415,15 +415,29 @@
       <h1 style="color: var(--ink-color); margin-bottom: 0.5rem;" id="finale-title">Weekly Artifact</h1>
       <p class="subtitle" id="milestone-status">Decoding emotional data...</p>
       
-      <!-- FIXED CONTAINER STYLING SO IMAGE STAYS CENTERED & NEVER MOVES TO BG -->
-      <div style="background: rgba(255,255,255,0.9); padding: 15px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 1.5rem; width: 100%; display: flex; justify-content: center; align-items: center;">
-        <img id="generated-milestone-img" class="generated-img" src="" alt="Milestone Artwork" crossorigin="anonymous" style="display: none; max-width: 100%; height: auto; border-radius: 8px;">
+      <!-- NEW COPY/PASTE UI (Hidden initially) -->
+      <div id="weekly-prompt-container" style="display:none; width: 100%; margin-bottom: 1.5rem; text-align: left;">
+          <div class="section-title" style="text-align: left; margin-top: 0;">1. Copy this Prompt</div>
+          <p style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text-muted);">Take this to Gemini (or another generator) to create your image.</p>
+          <textarea id="generated-prompt-text" class="journal-input" rows="5" readonly style="margin-bottom: 8px; font-size: 0.85rem; line-height: 1.4;"></textarea>
+          <button class="btn" onclick="copyPrompt()" style="background: var(--text-muted); padding: 0.6rem; font-size: 0.9rem;">📋 Copy Prompt</button>
+      </div>
+
+      <div id="weekly-upload-container" style="display:none; width: 100%; margin-bottom: 1.5rem; text-align: left;">
+          <div class="section-title" style="text-align: left;">2. Upload Result</div>
+          <p style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text-muted);">Save the image from Gemini and upload it here to bind it to your journal.</p>
+          <input type="file" id="gemini-image-upload" accept="image/*" class="journal-input" onchange="handleGeminiUpload(event)">
+      </div>
+
+      <!-- IMAGE DISPLAY CONTAINER -->
+      <div id="image-display-container" style="display:none; background: rgba(255,255,255,0.9); padding: 15px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 1.5rem; width: 100%; justify-content: center; align-items: center;">
+        <img id="generated-milestone-img" class="generated-img" src="" alt="Milestone Artwork" crossorigin="anonymous" style="display: none; max-width: 100%; height: auto; border-radius: 8px; box-shadow: none; margin-bottom: 0;">
       </div>
 
       <div class="finale-revelation" id="finale-revelation-text" style="background: rgba(255,255,255,0.85); padding: 15px; border-radius: 12px; margin-bottom: 1.5rem; width: 100%;"></div>
       
-      <div id="finale-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 400px; flex-direction: column;">
-        <button class="btn" id="milestone-download-btn" onclick="triggerHaptic(); downloadMilestone()" style="background: var(--ink-color);">Save to Camera Roll</button>
+      <div id="finale-buttons" style="display: none; gap: 10px; width: 100%; max-width: 400px; flex-direction: column;">
+        <button class="btn" id="milestone-download-btn" onclick="triggerHaptic(); downloadMilestone()" style="background: var(--ink-color); display: none;">Save to Camera Roll</button>
         <button class="btn" id="milestone-advance-btn" onclick="triggerHaptic(); finishMilestone()" style="background: transparent; color: var(--text-main); border: 1px solid var(--border-light);">Continue Journey</button>
       </div>
     </div>
@@ -431,6 +445,7 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyvwgB3BLe3YL_6BJ9UfVPMdRFE0Tl69kZY4fbpozw_w2bT3b-ZbFuaUToXDfV8rsZlPA/exec";
+    const BINGO_API_URL = "https://script.google.com/macros/s/AKfycbyczvvwajF5GAX4T3qwg-tqm1hyISmNMfMFMCSILhZifKmtqqOKnXoRzxCEh_zdJr0PQA/exec";
 
     const safeStore = {
       get: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
@@ -450,7 +465,6 @@
     let tempAppRating = '3';
     let currentSundayBingoSelections = [];
 
-    // Helper: Timeout fetch to prevent Google Script hangs
     async function fetchWithTimeout(url, options = {}, timeout = 6000) {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
@@ -488,7 +502,6 @@
     let activeEnergyMode = 'Normal';
     let activeFriction = '3';
 
-    // 22 User-Provided Artwork Bank URLs
     const artworkBank = [
       "https://img.magnific.com/free-vector/simple-sketch-happy-office-worker_1308-86391.jpg?semt=ais_hybrid&w=740&q=80",
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTNoMWuoRr9o1_qftwlw6SGLFe09wJDG-cP_MqWG0H9hw42l_H7TG65WOIQ&s=10",
@@ -559,7 +572,6 @@
       
       errorMsg.style.display = 'none';
 
-      // Local Validation Override for immediate entry
       if (codeInput === "FG-VIP-TEST" || codeInput === "DEV-77" || codeInput === "TEST-MODE") {
           btn.innerText = "Vault Authorized!";
           safeStore.set('master_access', 'true');
@@ -571,7 +583,6 @@
           return;
       }
 
-      // Live Server Validation
       const apiHash = generateSimpleHash(apiKeyInput);
       btn.innerText = "Verifying on Server...";
       
@@ -818,7 +829,6 @@
          `;
          wrapper.appendChild(page);
 
-         // Dedicated Sunday Bingo Page if applicable
          if (entry.bingoSummary) {
              const bingoPage = document.createElement('div');
              bingoPage.style.cssText = "width:800px; min-height:1120px; background-color:#fcf4f1; padding:80px; box-sizing:border-box; margin:0 auto; page-break-after:always; text-align:center; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#2d3748; font-family:sans-serif;";
@@ -922,7 +932,6 @@
       let recentEntries = [];
       try { recentEntries = JSON.parse(safeStore.get('recentEntriesTimes')) || []; } catch (e) {}
 
-      // 10 HOUR LOCK IMPLEMENTATION
       if (recentEntries.length > 0) {
         let lastEntryTime = recentEntries[recentEntries.length - 1];
         let hoursPassed = (Date.now() - lastEntryTime) / 3600000;
@@ -1029,6 +1038,46 @@
         img.src = e.target.result;
       };
       reader.readAsDataURL(file);
+    }
+
+    function handleGeminiUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                const imgContainer = document.getElementById('image-display-container');
+                const imgElement = document.getElementById('generated-milestone-img');
+                
+                imgElement.src = dataUrl;
+                imgContainer.style.display = 'flex';
+                imgElement.style.display = 'block';
+
+                if (allEntries.length > 0) {
+                    allEntries[allEntries.length - 1].artifactUrl = dataUrl;
+                    safeStore.set('allEntries', JSON.stringify(allEntries));
+                }
+                
+                const advBtn = document.getElementById('milestone-advance-btn');
+                advBtn.disabled = false;
+                advBtn.innerText = "Continue Journey";
+                advBtn.onclick = function() { triggerHaptic(); finishMilestone(); };
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function copyPrompt() {
+        triggerHaptic();
+        const copyText = document.getElementById("generated-prompt-text");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        
+        const btn = event.target;
+        const originalText = btn.innerText;
+        btn.innerText = "✓ Copied!";
+        setTimeout(() => { btn.innerText = originalText; }, 2000);
     }
 
     function completeOnboarding() {
@@ -1434,7 +1483,6 @@
       }
     }
 
-    // Google Sheets Fetch: Bingo_Questions Tab
     async function openSundayBingo() {
       const grid = document.getElementById('bingo-board-grid');
       grid.innerHTML = '<div style="grid-column: span 3; color: var(--text-muted); padding: 2rem;">Loading Sunday Bingo...</div>';
@@ -1453,7 +1501,7 @@
       ];
 
       try {
-        const response = await fetchWithTimeout(`${API_URL}?action=getBingoQuestions`, {}, 8000);
+        const response = await fetchWithTimeout(`${BINGO_API_URL}?action=getBingoQuestions`, {}, 8000);
         const data = await response.json();
         if (data && Array.isArray(data) && data.length > 0 && !data.error) {
           prompts = data.map(item => {
@@ -1632,11 +1680,17 @@
         });
     }
 
+    // New Monthly Collage Logic using raw Canvas drawing and original photos
     async function generateMonthlyCollage() {
         showScreen('screen-finale');
         document.getElementById('finale-title').innerText = "Monthly Artifact";
         const statusText = document.getElementById('milestone-status');
         statusText.innerText = "The Archivist is reviewing your month...";
+
+        document.getElementById('weekly-prompt-container').style.display = 'none';
+        document.getElementById('weekly-upload-container').style.display = 'none';
+        document.getElementById('image-display-container').style.display = 'none';
+        document.getElementById('finale-buttons').style.display = 'none';
 
         try {
             const apiKey = userSetup.apiKey;
@@ -1657,17 +1711,16 @@
 
             const archivistPrompt = `SYSTEM ROLE:
 You are the Lead Archivist and Narrative Director for a private personal journal called Moments Journal.
-Your task is to analyze a month of life data and output descriptions to generate a scrapbook background.
+Your task is to analyze a month of life data and output a summary and short photo captions to generate a scrapbook layout.
 
 USER DATA:
 ${summaries}
 
 INSTRUCTIONS:
 1. Write ONE overarching 3-sentence revelation grounded in specific details from the data. Acknowledge contradictions and major emotional shifts. Avoid clichés. Output this in "revelation".
-2. Write a description of scrapbook border textures (e.g., "hand-painted pressed autumn leaves, soft pastel washi tape, and vintage watercolor paper grain"). Output in "border_texture".
-3. Write the mood of the month in 3-5 words. Output in "mood".
+2. Create exactly ${photos.length || 1} short, poetic captions (max 3 words each) that reflect the general mood of the month. Output this as an array of strings in "captions".
 
-OUTPUT ONLY valid JSON matching: {"revelation": "...", "border_texture": "...", "mood": "..."}`;
+OUTPUT ONLY valid JSON matching exactly: {"revelation": "...", "captions": ["Caption 1", "Caption 2"]}`;
 
             let promptPayload = {
               contents: [{ parts: [{ text: archivistPrompt }] }],
@@ -1681,130 +1734,130 @@ OUTPUT ONLY valid JSON matching: {"revelation": "...", "border_texture": "...", 
             const parsed = JSON.parse(aiText);
 
             document.getElementById('finale-revelation-text').innerText = parsed.revelation;
-            statusText.innerText = "Painting your atmospheric background frame...";
+            statusText.innerText = "Stitching your monthly photo collage...";
 
-            let builtPrompt = `A breathtakingly gorgeous, high-quality scrapbook page background canvas in the aesthetic of ${milestoneSetup.artStyle}. The outer edges of the canvas are highly textured with ${parsed.border_texture}, reflecting a mood of ${parsed.mood}. The absolute center of the image is left completely empty with beautiful, clean negative space. No people, no faces. Warm aesthetic studio lighting, 8k resolution, highly detailed.`;
-            
-            const safePrompt = encodeURIComponent(builtPrompt);
-            const dynamicSeed = Math.floor(Math.random() * 1000000);
-            const bgUrl = `https://image.pollinations.ai/prompt/${safePrompt}?width=1024&height=1024&nologo=true&enhance=false&model=flux&seed=${dynamicSeed}`;
-
-            statusText.innerText = "Programmatically compositioning all monthly photos into the archive frame...";
-            
-            // PROGRAMMATICALLY COMPOSITING ALL PROVIDED PHOTOS ONTO THE BACKGROUND CANVAS
             const canvas = document.createElement('canvas');
-            canvas.width = 1024; 
-            canvas.height = 1024;
+            canvas.width = 1080; 
+            canvas.height = 1920;
             const ctx = canvas.getContext('2d');
             
-            // 1. Load the generated blank frame onto the base of the canvas
-            await new Promise(resolve => {
-                let bgImg = new Image();
-                bgImg.crossOrigin = "anonymous";
-                bgImg.onload = () => {
-                    ctx.drawImage(bgImg, 0, 0, 1024, 1024);
-                    // Subtle dark overlay to ensure photos pop if background is bright
-                    ctx.fillStyle = 'rgba(0,0,0,0.15)';
-                    ctx.fillRect(0, 0, 1024, 1024);
-                    resolve();
-                };
-                bgImg.onerror = () => {
-                    // Fail gracefully if pollination hangs
-                    ctx.fillStyle = '#2d3748';
-                    ctx.fillRect(0, 0, 1024, 1024);
-                    ctx.fillStyle = 'white';
-                    ctx.font = '30px sans-serif';
-                    ctx.fillText("Failed to load background frame signal.", 50, 100);
-                    resolve();
-                };
-                bgImg.src = bgUrl;
-            });
+            // Draw Gradient Background
+            let grd = ctx.createLinearGradient(0, 0, 0, 1920);
+            grd.addColorStop(0, "#fdf2e9");
+            grd.addColorStop(1, "#f2d3c2");
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, 1080, 1920);
 
-            // 2. Programmically composite every photo in the monthly list onto the clean central negative space
+            // Draw Header
+            ctx.fillStyle = "#2d3748";
+            ctx.font = "bold 60px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("Moments Journal", 540, 120);
+            ctx.font = "40px sans-serif";
+            ctx.fillText(`Monthly Reflections`, 540, 180);
+
+            // Draw Photos
             if (photos.length > 0) {
-                // Determine layout grid (e.g., 3x3, 4x4)
-                let cols = Math.ceil(Math.sqrt(photos.length));
+                let cols = 2;
                 let rows = Math.ceil(photos.length / cols);
-                
-                // Set constraints based on a defined inner 'safety zone' in the generated frame
-                let outerMargin = 100; // Leave space for the generated edge detail
-                let innerSpacing = 15; 
-                let availableWidth = 1024 - (outerMargin * 2) - (innerSpacing * (cols - 1));
-                let availableHeight = 1024 - (outerMargin * 2) - (innerSpacing * (rows - 1));
-                
-                // Max size for any individual cell to remain square
-                let cellSize = Math.min(availableWidth / cols, availableHeight / rows);
-                
-                // Adjust safety zone size slightly if photos can be larger
-                let actualZoneWidth = (cellSize * cols) + (innerSpacing * (cols - 1));
-                let actualZoneHeight = (cellSize * rows) + (innerSpacing * (rows - 1));
-                
-                // Calculate starting offsets to center the composite block in the generated frame
-                let startX = (1024 - actualZoneWidth) / 2;
-                let startY = (1024 - actualZoneHeight) / 2;
+                let cellH = 1200 / (rows === 0 ? 1 : rows);
+                if (rows > 3) cellH = 400; // Limit spacing so it doesn't compress too much
 
-                // Loop through photos and draw them to canvas
                 for (let i = 0; i < photos.length; i++) {
                     await new Promise(resolve => {
                         let img = new Image();
                         img.onload = () => {
                             let col = i % cols;
                             let row = Math.floor(i / cols);
-                            
-                            let x = startX + (col * (cellSize + innerSpacing));
-                            let y = startY + (row * (cellSize + innerSpacing));
-                            
-                            // 3. APPLY PREMIUM FRAMING DECORATION PER PROGRAMMATIC PHOTO
-                            
-                            // A. Strong drop shadow for separation
+                            let centerX = (col * 540) + 270 + (Math.random() * 60 - 30);
+                            let centerY = (row * cellH) + 400 + (Math.random() * 60 - 30);
+                            let rot = (Math.random() * 20 - 10) * Math.PI / 180;
+
                             ctx.save();
-                            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-                            ctx.shadowBlur = 20;
-                            ctx.shadowOffsetX = 10;
+                            ctx.translate(centerX, centerY);
+                            ctx.rotate(rot);
+
+                            // Shadow
+                            ctx.shadowColor = 'rgba(0,0,0,0.15)';
+                            ctx.shadowBlur = 15;
+                            ctx.shadowOffsetX = 5;
                             ctx.shadowOffsetY = 10;
-                            
-                            // B. Thick crisp white matte frame
-                            ctx.fillStyle = 'white';
-                            ctx.fillRect(x, y, cellSize, cellSize);
-                            
-                            // Reset shadows to avoid affecting the image content
+
+                            // Polaroid Base
+                            ctx.fillStyle = '#fff';
+                            ctx.fillRect(-220, -260, 440, 520);
+
                             ctx.shadowColor = 'transparent';
-                            
-                            // C. Draw image inside the matte, accounting for spacing
-                            let matteWidth = 12; // thickness of white border
-                            let drawW = cellSize - (matteWidth * 2);
-                            let drawH = cellSize - (matteWidth * 2);
-                            
-                            // D. Crop logic (aspect-fill inside cell)
-                            let imageScale = Math.max(drawW / img.width, drawH / img.height);
-                            let scaledW = img.width * imageScale;
-                            let scaledH = img.height * imageScale;
-                            let offsetW = (scaledW - drawW) / 2;
-                            let offsetH = (scaledH - drawH) / 2;
-                            
-                            // E. Create clipping path and draw
+
+                            // Text
+                            ctx.fillStyle = '#2d3748';
+                            ctx.font = 'italic 26px serif';
+                            ctx.textAlign = 'center';
+                            let cap = (parsed.captions && parsed.captions[i]) ? parsed.captions[i] : "A captured moment";
+                            ctx.fillText(cap, 0, 210);
+
+                            // Image Clip & Draw
+                            ctx.save();
                             ctx.beginPath();
-                            ctx.rect(x + matteWidth, y + matteWidth, drawW, drawH);
+                            ctx.rect(-190, -230, 380, 380);
                             ctx.clip();
-                            ctx.drawImage(img, offsetW, offsetH, img.width - offsetW, img.height - offsetH, x + matteWidth, y + matteWidth, drawW, drawH);
-                            
-                            // F. Programmatic random rotation for casual scrapbook feel
-                            // ctx.rotate( ... ) could be added, but requires complex save/restore management
-                            
-                            ctx.restore(); // Restore shadows/clipping state
+                            let scale2 = Math.max(380 / img.width, 380 / img.height);
+                            ctx.drawImage(img, (img.width - 380/scale2)/2, (img.height - 380/scale2)/2, 380/scale2, 380/scale2, -190, -230, 380, 380);
+                            ctx.restore();
+
+                            ctx.restore();
                             resolve();
                         };
-                        img.onerror = () => resolve(); // skip broken images silenty
+                        img.onerror = () => resolve(); 
                         img.src = "data:image/jpeg;base64," + photos[i];
                     });
                 }
             } else {
-                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.fillStyle = 'rgba(255,255,255,0.7)';
                 ctx.font = 'italic 36px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText("No monthly base photos were provided.", 512, 512);
-                ctx.fillText("Frame contains only archived text revelation.", 512, 570);
+                ctx.fillText("No memories captured this month.", 540, 960);
             }
+
+            // Summary Box Bottom
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            let bx = 60, by = 1600, bw = 960, bh = 280, br = 20;
+            ctx.beginPath();
+            ctx.moveTo(bx + br, by);
+            ctx.lineTo(bx + bw - br, by);
+            ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + br);
+            ctx.lineTo(bx + bw, by + bh - br);
+            ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - br, by + bh);
+            ctx.lineTo(bx + br, by + bh);
+            ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - br);
+            ctx.lineTo(bx, by + br);
+            ctx.quadraticCurveTo(bx, by, bx + br, by);
+            ctx.fill();
+
+            ctx.fillStyle = '#2d3748';
+            ctx.font = 'bold 36px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("Month Highlights", 540, 1660);
+
+            ctx.font = '28px sans-serif';
+            function wrapText(context, text, x, y, maxWidth, lineHeight) {
+                let words = text.split(' ');
+                let line = '';
+                for(let n = 0; n < words.length; n++) {
+                    let testLine = line + words[n] + ' ';
+                    let metrics = context.measureText(testLine);
+                    let testWidth = metrics.width;
+                    if (testWidth > maxWidth && n > 0) {
+                        context.fillText(line.trim(), x, y);
+                        line = words[n] + ' ';
+                        y += lineHeight;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                context.fillText(line.trim(), x, y);
+            }
+            wrapText(ctx, parsed.revelation, 540, 1720, 880, 40);
 
             const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
             
@@ -1816,35 +1869,39 @@ OUTPUT ONLY valid JSON matching: {"revelation": "...", "border_texture": "...", 
             }
 
             const imgElement = document.getElementById('generated-milestone-img');
+            const imgContainer = document.getElementById('image-display-container');
             
-            // Safety fallback timer so buttons always show even if onload lags
-            const imgTimeout = setTimeout(() => {
-                statusText.style.display = 'none';
-                imgElement.style.display = 'block';
-                document.getElementById('finale-buttons').style.display = 'flex';
-            }, 8000);
-
             imgElement.onload = function() {
-                clearTimeout(imgTimeout);
                 statusText.style.display = 'none';
+                imgContainer.style.display = 'flex';
                 imgElement.style.display = 'block';
-                document.getElementById('milestone-advance-btn').innerText = "Weave PDF Keepsake";
-                document.getElementById('milestone-advance-btn').onclick = function() { triggerHaptic(); weaveCurrentMonthPDF(); };
+                const advBtn = document.getElementById('milestone-advance-btn');
+                advBtn.innerText = "Weave PDF Keepsake";
+                advBtn.disabled = false;
+                advBtn.onclick = function() { triggerHaptic(); weaveCurrentMonthPDF(); };
                 document.getElementById('finale-buttons').style.display = 'flex';
             };
             imgElement.src = dataUrl;
 
         } catch (err) {
             console.error("Collage Compositor Error:", err);
-            statusText.innerText = "Error programmatically compositing all photos into frame.";
+            statusText.innerText = "Error compositing photo layout.";
             document.getElementById('finale-buttons').style.display = 'flex';
         }
     }
 
+    // New Weekly Generation Logic (Prompt copying + Manual upload)
     async function generateWeeklyMilestone() {
       showScreen('screen-finale');
       const statusText = document.getElementById('milestone-status');
-      statusText.innerText = "Decoding emotional data & painting artifact...";
+      statusText.innerText = "Decoding emotional data & building prompt...";
+      statusText.style.display = 'block';
+      
+      document.getElementById('weekly-prompt-container').style.display = 'none';
+      document.getElementById('weekly-upload-container').style.display = 'none';
+      document.getElementById('image-display-container').style.display = 'none';
+      document.getElementById('finale-buttons').style.display = 'none';
+      document.getElementById('gemini-image-upload').value = '';
 
       try {
         const apiKey = userSetup.apiKey;
@@ -1855,7 +1912,7 @@ OUTPUT ONLY valid JSON matching: {"revelation": "...", "border_texture": "...", 
         
         const directorPrompt = `SYSTEM ROLE:
 You are the Visual Memory Director for a private personal journal.
-Your task is to analyze user data and a reference photo to output precise physical descriptions for an image generator.
+Your task is to analyze user data and a reference photo to output precise physical descriptions to form an image generation prompt.
 
 USER DATA:
 ${summaries}
@@ -1863,7 +1920,7 @@ ${summaries}
 INSTRUCTIONS:
 1. Write ONE 3-sentence revelation grounded in their actual data. Avoid therapy-speak and cliches. Put this in "revelation".
 2. IF A PHOTO IS PROVIDED: Perform an absolute computer vision extraction of the exact features from the reference photo. You must output 4 specific properties:
-   - "subjects": Exact skin tone, hair color/texture, facial hair, glasses, ages, and relationships. (Note: If a toddler girl is present, describe her as having thin, slightly curly hair).
+   - "subjects": Exact skin tone, hair color/texture, facial hair, glasses, ages, and relationships. (CRITICAL USER PREFERENCE: If a toddler girl is present, she is named Ellu, has thin slightly curly hair, and communicates strictly through babble and gestures without speaking real words).
    - "clothing": Precise colors, fabrics, and patterns of the garments.
    - "action": Specific poses and interactions.
    - "setting": The background environment.
@@ -1884,125 +1941,4 @@ OUTPUT ONLY valid JSON exactly matching: {"revelation": "...", "subjects": "..."
         const flashRes = await fetchWithTimeout(flashUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(promptPayload) }, 15000);
         const flashData = await flashRes.json();
         let aiText = flashData.candidates[0].content.parts[0].text;
-        aiText = aiText.replace(/```json/gi, '').replace(/```/gi, '').trim();
-        const parsed = JSON.parse(aiText);
-
-        document.getElementById('finale-revelation-text').innerText = parsed.revelation;
-        statusText.innerText = "Rendering artifact canvas...";
-
-        let builtPrompt;
-        if (milestoneSetup.baseImageBase64) {
-            builtPrompt = `A breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}. Centered is ${parsed.subjects}. They are wearing ${parsed.clothing}. They are ${parsed.action}. The background is ${parsed.setting}. Flawless composition, anatomically correct, highly detailed.`;
-        } else {
-            builtPrompt = `A breathtakingly beautiful, high-quality masterpiece in the aesthetic of ${milestoneSetup.artStyle}. The setting is ${parsed.setting}. Flawless composition, highly detailed.`;
-        }
-
-        const safePrompt = encodeURIComponent(builtPrompt);
-        const dynamicSeed = Math.floor(Math.random() * 1000000);
-        const imageUrl = `https://image.pollinations.ai/prompt/${safePrompt}?width=1024&height=1024&nologo=true&enhance=false&model=flux&seed=${dynamicSeed}`;
-
-        if (allEntries.length > 0) {
-            allEntries[allEntries.length - 1].artifactUrl = imageUrl;
-            allEntries[allEntries.length - 1].artifactRevelation = parsed.revelation;
-            safeStore.set('allEntries', JSON.stringify(allEntries));
-        }
-
-        const imgElement = document.getElementById('generated-milestone-img');
-        
-        // Safety fallback timer so buttons always show even if onload lags or blocks
-        const imgTimeout = setTimeout(() => {
-            statusText.style.display = 'none';
-            imgElement.style.display = 'block';
-            document.getElementById('finale-buttons').style.display = 'flex';
-        }, 8000);
-
-        imgElement.onload = function() {
-          clearTimeout(imgTimeout);
-          statusText.style.display = 'none';
-          imgElement.style.display = 'block';
-          
-          document.getElementById('milestone-advance-btn').innerText = "Continue Journey";
-          document.getElementById('milestone-advance-btn').onclick = function() { triggerHaptic(); finishMilestone(); };
-          
-          document.getElementById('finale-buttons').style.display = 'flex';
-        };
-
-        imgElement.onerror = function() {
-          clearTimeout(imgTimeout);
-          statusText.innerText = "Artifact rendered successfully.";
-          imgElement.style.display = 'none'; // hide broken icon if any
-          document.getElementById('finale-buttons').style.display = 'flex';
-        };
-
-        imgElement.src = imageUrl;
-
-      } catch (err) { 
-        statusText.innerText = "Artifact recorded successfully."; 
-        document.getElementById('generated-milestone-img').style.display = 'none';
-        document.getElementById('finale-buttons').style.display = 'flex'; 
-      }
-    }
-
-    function generateMilestone() {
-      let todayDate = new Date(startDate);
-      todayDate.setDate(startDate.getDate() + (currentDay - 1));
-      let tomorrow = new Date(todayDate);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      
-      let isEndOfMonth = tomorrow.getDate() === 1;
-
-      if (isEndOfMonth) {
-          generateMonthlyCollage();
-      } else {
-          generateWeeklyMilestone();
-      }
-    }
-
-    function finishMilestone() {
-      currentDay++;
-      safeStore.set('currentDay', currentDay);
-      milestoneSetup.baseImageBase64 = '';
-      document.getElementById('preview-image').src = '';
-      document.getElementById('preview-image').style.display = 'none';
-      document.getElementById('generated-milestone-img').style.display = 'none';
-      document.getElementById('finale-buttons').style.display = 'none';
-      document.getElementById('finale-revelation-text').innerText = '';
-      
-      document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork();
-      
-      buildDashboard();
-      showScreen('screen-dashboard');
-    }
-
-    window.addEventListener('load', async function() {
-      try {
-        const hasMasterAccess = safeStore.get('master_access');
-        const localPin = safeStore.get('local_pin');
-        const setupStr = safeStore.get('journalSetup');
-        const savedDay = safeStore.get('currentDay');
-        const savedStart = safeStore.get('startDate');
-        
-        if (savedDay) currentDay = parseInt(savedDay);
-        if (savedStart) startDate = new Date(savedStart);
-
-        await asyncGetQuestionBank();
-
-        if (hasMasterAccess === 'true' || safeStore.get('dev_mode') === 'true') {
-          isDevMode = safeStore.get('dev_mode') === 'true'; 
-          
-          if (localPin || isDevMode) {
-              if (isDevMode && setupStr) {
-                  document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork();
-              }
-              showScreen('screen-local-lock');
-          } else {
-              showScreen('screen-pin-setup');
-          }
-        } else { 
-            showScreen('screen-master-lock'); 
-        }
-      } catch (e) { console.error("BOOTERROR:", e); showScreen('screen-master-lock'); }
-    });
-  </script>
-</body>
-</html>
+        aiText = aiText.replace(/```json/gi, '').replace(/
