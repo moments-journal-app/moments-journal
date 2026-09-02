@@ -190,47 +190,75 @@
     </div>
   </div>
 
+  <!-- STEP 1: INVITE CODE SCREEN -->
   <div id="screen-master-lock" class="screen active">
     <div class="lock-screen-container">
-        <h1>Moments Journal</h1>
-        <p class="subtitle">Enter your Invite Code and Gemini API Key to authorize this device.</p>
+        <h1 style="margin-bottom: 0.2rem;">Moments Journal</h1>
+        <p class="subtitle" style="margin-bottom: 2.5rem;">Let's set up your private vault.</p>
+        
         <div id="master-error-msg" class="error-msg"></div>
-        <input type="text" id="master-code-input" class="passcode-input" placeholder="INVITE CODE">
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; text-align: left; width: 100%; max-width: 300px;">The journal runs on your free personal AI connection.</p>
-        <div style="position: relative; width: 100%; max-width: 300px; margin-bottom: 1rem;">
-          <input type="password" id="master-api-input" class="api-input" placeholder="Paste your API Key here" style="margin-bottom: 0;">
-          <button type="button" id="toggle-api-visibility" onclick="toggleApiKeyVisibility()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--text-muted);" title="Show/Hide API Key">👁️</button>
+
+        <div style="width: 100%; max-width: 300px; text-align: left; margin-bottom: 1.5rem;">
+          <div style="font-size: 0.75rem; font-weight: bold; color: var(--ink-color); text-transform: uppercase; margin-bottom: 8px;">Step 1: Invite Code</div>
+          <input type="text" id="master-code-input" class="passcode-input" placeholder="Enter Code" style="margin-bottom: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
         </div>
-        <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--ink-color); font-weight: 600; text-decoration: none; font-size: 0.85rem; margin-bottom: 1rem;">🔑 Get Free API Key Here</a>
-        <button class="btn" id="master-unlock-btn" onclick="triggerHaptic(); verifyMasterCode()" style="max-width: 300px; margin-bottom: 0.5rem;">Authorize Vault</button>
-        <div style="width: 100%; max-width: 300px; border-top: 1px dashed var(--border-light); padding-top: 1rem; margin-top: 0.5rem; text-align: center;">
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;">Already have a backup file?</p>
+
+        <button class="btn" onclick="triggerHaptic(); proceedToApiSetup()" style="max-width: 300px; margin-bottom: 2rem; box-shadow: 0 4px 10px rgba(45, 55, 72, 0.2);">Verify Code</button>
+
+        <div style="width: 100%; max-width: 300px; text-align: center; border-top: 1px solid var(--border-light); padding-top: 1.5rem;">
           <input type="file" id="master-import-file" style="display: none;" accept=".json" onchange="importVault(event)">
-          <button class="btn vault-btn" style="width: 100%; margin-top: 0;" onclick="triggerHaptic(); document.getElementById('master-import-file').click();">📁 Upload & Restore Backup</button>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Returning user? <a href="#" onclick="event.preventDefault(); document.getElementById('master-import-file').click();" style="color: var(--ink-color); font-weight: 700; text-decoration: none;">Restore Backup</a></p>
         </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: API KEY SCREEN -->
+  <div id="screen-api-setup" class="screen">
+    <div class="lock-screen-container">
+        <h1 style="margin-bottom: 0.2rem;">AI Connection</h1>
+        <p class="subtitle" style="margin-bottom: 2.5rem;">The journal runs on your free personal AI.</p>
+        
+        <div id="api-error-msg" class="error-msg"></div>
+
+        <div style="width: 100%; max-width: 300px; text-align: left; margin-bottom: 2rem; padding: 15px; background: rgba(255,255,255,0.6); border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div style="font-size: 0.75rem; font-weight: bold; color: var(--ink-color); text-transform: uppercase;">Step 2: API Key</div>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--text-main); font-weight: 600; text-decoration: underline; font-size: 0.75rem;">Get Free Key ↗</a>
+          </div>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; margin-top: 0; line-height: 1.4;">Required to keep your entries private and run the journal.</p>
+          <div style="position: relative; width: 100%;">
+            <input type="password" id="master-api-input" class="api-input" placeholder="Paste API Key here" style="margin-bottom: 0;">
+            <button type="button" id="toggle-api-visibility" onclick="toggleApiKeyVisibility()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--text-muted);" title="Show/Hide API Key">👁️</button>
+          </div>
+        </div>
+
+        <button class="btn" id="master-unlock-btn" onclick="triggerHaptic(); verifyMasterCode()" style="max-width: 300px; box-shadow: 0 4px 10px rgba(45, 55, 72, 0.2);">Authorize Vault</button>
+        
+        <a href="#" onclick="event.preventDefault(); showScreen('screen-master-lock')" style="display: block; text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 1.5rem; text-decoration: none;">← Edit Invite Code</a>
     </div>
   </div>
 
   <div id="screen-pin-setup" class="screen">
     <div class="lock-screen-container">
-        <h1>Secure Your Vault</h1>
-        <p class="subtitle">Create a private 4-digit PIN. This will lock your journal locally on this device.</p>
+        <h1 style="margin-bottom: 0.2rem;">Secure Your Vault</h1>
+        <p class="subtitle" style="margin-bottom: 2.5rem;">Create a private 4-digit PIN for this device.</p>
         <div id="pin-setup-error" class="error-msg"></div>
-        <input type="password" id="pin-setup-input" class="passcode-input" placeholder="0000" maxlength="4" pattern="\d*">
-        <button class="btn" onclick="triggerHaptic(); saveLocalPin()" style="max-width: 300px;">Set PIN</button>
+        <input type="password" id="pin-setup-input" class="passcode-input" placeholder="0000" maxlength="4" pattern="\d*" style="box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+        <button class="btn" onclick="triggerHaptic(); saveLocalPin()" style="max-width: 300px; box-shadow: 0 4px 10px rgba(45, 55, 72, 0.2);">Set PIN</button>
     </div>
   </div>
 
   <div id="screen-local-lock" class="screen">
     <div class="lock-screen-container">
-        <h1>Moments Journal</h1>
-        <p class="subtitle">Welcome back. Enter your PIN.</p>
+        <h1 style="margin-bottom: 0.2rem;">Moments Journal</h1>
+        <p class="subtitle" style="margin-bottom: 2.5rem;">Welcome back.</p>
         <div id="local-error-msg" class="error-msg"></div>
-        <input type="password" id="local-pin-input" class="passcode-input" placeholder="••••" maxlength="4" pattern="\d*">
-        <button class="btn" id="local-unlock-btn" onclick="triggerHaptic(); unlockWithPin()" style="max-width: 300px;">Unlock Vault</button>
-        <div style="width: 100%; max-width: 300px; border-top: 1px dashed var(--border-light); padding-top: 1rem; margin-top: 1.5rem; text-align: center;">
+        <input type="password" id="local-pin-input" class="passcode-input" placeholder="••••" maxlength="4" pattern="\d*" style="box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+        <button class="btn" id="local-unlock-btn" onclick="triggerHaptic(); unlockWithPin()" style="max-width: 300px; margin-bottom: 2rem; box-shadow: 0 4px 10px rgba(45, 55, 72, 0.2);">Unlock Vault</button>
+        
+        <div style="width: 100%; max-width: 300px; text-align: center; border-top: 1px solid var(--border-light); padding-top: 1.5rem;">
           <input type="file" id="local-import-file" style="display: none;" accept=".json" onchange="importVault(event)">
-          <button class="btn vault-btn" style="width: 100%; margin-top: 0;" onclick="triggerHaptic(); document.getElementById('local-import-file').click();">📁 Upload & Restore Backup</button>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Device wiped? <a href="#" onclick="event.preventDefault(); document.getElementById('local-import-file').click();" style="color: var(--ink-color); font-weight: 700; text-decoration: none;">Restore Backup</a></p>
         </div>
     </div>
   </div>
@@ -523,14 +551,26 @@
       window.scrollTo(0, 0); 
     }
 
+    function proceedToApiSetup() {
+      const codeInput = document.getElementById('master-code-input').value.trim();
+      const errorMsg = document.getElementById('master-error-msg');
+      if (!codeInput) {
+        errorMsg.innerText = "Please enter an Invite Code.";
+        errorMsg.style.display = 'block';
+        return;
+      }
+      errorMsg.style.display = 'none';
+      showScreen('screen-api-setup');
+    }
+
     function verifyMasterCode() {
       const codeInput = document.getElementById('master-code-input').value.trim().toUpperCase();
       const apiKeyInput = document.getElementById('master-api-input').value.trim();
       const btn = document.getElementById('master-unlock-btn');
-      const errorMsg = document.getElementById('master-error-msg');
+      const errorMsg = document.getElementById('api-error-msg');
       
-      if (!codeInput || !apiKeyInput) {
-        errorMsg.innerText = "Please enter both the Invite Code and your API Key.";
+      if (!apiKeyInput) {
+        errorMsg.innerText = "Please enter your API Key.";
         errorMsg.style.display = 'block';
         return;
       }
