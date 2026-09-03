@@ -538,11 +538,47 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxHuEnhc7DuHY7pmsjyvBga1SF2_SxpBT88MwwL_gN8qSHSOzOT7tv3THWUmBJ-Wnu0Wg/exec";
 
-    // Strictly original safeStore logic to prevent cache wipe loops
+    // Ultimate Multi-Tier Storage Engine
     const safeStore = {
-      get: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
-      set: function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} },
-      clear: function() { try { localStorage.clear(); } catch(e) {} }
+      mem: {},
+      get: function(k) {
+        try { let v = localStorage.getItem(k); if(v !== null) return v; } catch(e) {}
+        try {
+          let name = k + "=";
+          let decodedCookie = decodeURIComponent(document.cookie);
+          let ca = decodedCookie.split(';');
+          for(let i = 0; i <ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1);
+            if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+          }
+        } catch(e) {}
+        try { let v = sessionStorage.getItem(k); if(v !== null) return v; } catch(e) {}
+        return this.mem[k] || null;
+      },
+      set: function(k, v) {
+        this.mem[k] = v;
+        try { localStorage.setItem(k, v); } catch(e) {}
+        try { sessionStorage.setItem(k, v); } catch(e) {}
+        try {
+            let d = new Date(); d.setTime(d.getTime() + (3650*24*60*60*1000));
+            document.cookie = k + "=" + v + ";expires=" + d.toUTCString() + ";path=/;SameSite=Lax";
+        } catch(e) {}
+      },
+      clear: function() {
+        this.mem = {};
+        try { localStorage.clear(); } catch(e) {}
+        try { sessionStorage.clear(); } catch(e) {}
+        try {
+            let cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                let cookie = cookies[i];
+                let eqPos = cookie.indexOf("=");
+                let name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+            }
+        } catch(e) {}
+      }
     };
 
     let currentDay = 1;
@@ -556,7 +592,6 @@
     let tempWeekRating = '3';
     let tempAppRating = '3';
     let currentSundayBingoSelections = [];
-    let isAdvancing = false; // Debounce lock
     
     // UI State Vars
     let activeVibeScore = 3;
@@ -1452,12 +1487,7 @@
       }).catch(err => { btn.innerText = originalText; btn.disabled = false; });
     }
 
-    let isAdvancing = false;
-
     function advanceFromClimax() {
-      if (isAdvancing) return;
-      isAdvancing = true;
-
       let todayDate = new Date(startDate); todayDate.setDate(startDate.getDate() + (currentDay - 1));
       let tomorrow = new Date(todayDate); tomorrow.setDate(tomorrow.getDate() + 1);
       
@@ -1466,14 +1496,10 @@
 
       if (isEndOfMonth) {
         buildGoalReviewScreen(todayDate);
-        isAdvancing = false;
       } else if (isSunday) {
         openSundayBingo();
-        isAdvancing = false;
       } else {
         currentDay++; safeStore.set('currentDay', currentDay); buildDashboard(); showScreen('screen-dashboard');
-        // Lock progression for 1 second to block double-taps
-        setTimeout(() => { isAdvancing = false; }, 1000);
       }
     }
 
@@ -1801,15 +1827,9 @@
     }
 
     function finishMilestone() {
-      if (isAdvancing) return;
-      isAdvancing = true;
-
       currentDay++; safeStore.set('currentDay', currentDay); milestoneSetup.baseImageBase64 = '';
       document.getElementById('generated-milestone-img').style.display = 'none'; document.getElementById('image-display-container').style.display = 'none'; document.getElementById('finale-buttons').style.display = 'none'; document.getElementById('weekly-prompt-container').style.display = 'none'; document.getElementById('weekly-upload-container').style.display = 'none'; document.getElementById('finale-revelation-text').innerText = '';
       document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork(); buildDashboard(); showScreen('screen-dashboard');
-      
-      // Lock progression for 1 second to block double-taps
-      setTimeout(() => { isAdvancing = false; }, 1000);
     }
 
     window.addEventListener('DOMContentLoaded', function() {
@@ -1825,13 +1845,6 @@
         if (savedStart) startDate = new Date(savedStart);
         if (savedEntries) {
             try { allEntries = JSON.parse(savedEntries); } catch(e) { allEntries = []; }
-        }
-
-        // --- AUTO-HEAL GLITCHED DAYS ---
-        // If a double-tap previously pushed the tracker too far ahead, this safely snaps it back.
-        if (currentDay > allEntries.length + 1) {
-            currentDay = allEntries.length + 1;
-            safeStore.set('currentDay', currentDay);
         }
 
         if (hasMasterAccess === 'true' || safeStore.get('dev_mode') === 'true') {
