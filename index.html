@@ -47,13 +47,28 @@
     
     .map-node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; position: relative; z-index: 2; flex-shrink: 0; user-select: none; -webkit-user-select: none; }
     .map-node.completed { background-color: var(--ink-color); color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    .map-node.active { border: 3px solid var(--ink-color); color: var(--ink-color); background: rgba(255,255,255,0.95); box-shadow: 0 0 12px rgba(217, 119, 87, 0.3); animation: pulse 2s infinite; }
-    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(217, 119, 87, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(217, 119, 87, 0); } 100% { box-shadow: 0 0 0 0 rgba(217, 119, 87, 0); } }
     .map-node.locked { background-color: rgba(255,255,255,0.8); color: var(--text-main); opacity: 1; border: 1px solid var(--border-light); cursor: not-allowed; }
     .map-node.past-ignored { background-color: transparent; color: var(--text-muted); opacity: 0.3; border: 1px dashed var(--border-light); cursor: not-allowed; }
 
+    /* Super Glow Active Date Animation */
+    .map-node.active { 
+      background-color: var(--ink-color); 
+      color: white; 
+      border: 3px solid white; 
+      box-shadow: 0 0 15px var(--ink-color), 0 0 30px var(--ink-color); 
+      transform: scale(1.2); 
+      font-weight: bold;
+      animation: superGlow 1.2s infinite alternate; 
+      z-index: 10; 
+    }
+    @keyframes superGlow { 
+      0% { box-shadow: 0 0 8px rgba(217, 119, 87, 0.6); transform: scale(1.15); } 
+      100% { box-shadow: 0 0 25px rgba(217, 119, 87, 1), 0 0 50px rgba(217, 119, 87, 0.8); transform: scale(1.25); } 
+    }
+
     .map-node.sunday-bingo { border: 2px dashed var(--ink-color); }
     .map-node.sunday-bingo::after { content: '★'; position: absolute; top: -4px; right: -2px; font-size: 0.65rem; color: var(--ink-color); }
+    .map-node.active.sunday-bingo::after { color: white; } /* Keep star visible on colored background */
 
     /* Scratch Card Affirmation */
     .affirmation-wrapper { position: relative; width: 100%; max-width: 350px; margin: 0 auto 2rem; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.05); min-height: 80px; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
@@ -403,7 +418,8 @@
       <div class="climax-author" id="climax-quote-author"></div>
     </div>
     <div style="position: relative; z-index: 2; margin-top: 1.5rem; width: 100%; max-width: 500px; display: flex; gap: 1rem;">
-      <button class="btn" type="button" id="climax-download-btn" onclick="triggerHaptic(); downloadClimax()" style="background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); font-size: 0.9rem;">Save to Camera Roll</button>
+      <!-- FIXED BUTTON: Fully opaque frosted background and dark text -->
+      <button class="btn" type="button" id="climax-download-btn" onclick="triggerHaptic(); downloadClimax()" style="background: rgba(255,255,255,0.85); color: var(--text-main); font-weight: 700; backdrop-filter: blur(5px); font-size: 0.9rem;">Save to Camera Roll</button>
       <button class="btn" type="button" onclick="triggerHaptic(); advanceFromClimax()" style="background: var(--ink-color); font-size: 0.9rem;">Close Journal</button>
     </div>
   </div>
@@ -538,47 +554,11 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxHuEnhc7DuHY7pmsjyvBga1SF2_SxpBT88MwwL_gN8qSHSOzOT7tv3THWUmBJ-Wnu0Wg/exec";
 
-    // Ultimate Multi-Tier Storage Engine
+    // Reverted to Vanilla SafeStore to completely prevent Browser Security Crashes
     const safeStore = {
-      mem: {},
-      get: function(k) {
-        try { let v = localStorage.getItem(k); if(v !== null) return v; } catch(e) {}
-        try {
-          let name = k + "=";
-          let decodedCookie = decodeURIComponent(document.cookie);
-          let ca = decodedCookie.split(';');
-          for(let i = 0; i <ca.length; i++) {
-            let c = ca[i];
-            while (c.charAt(0) == ' ') c = c.substring(1);
-            if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
-          }
-        } catch(e) {}
-        try { let v = sessionStorage.getItem(k); if(v !== null) return v; } catch(e) {}
-        return this.mem[k] || null;
-      },
-      set: function(k, v) {
-        this.mem[k] = v;
-        try { localStorage.setItem(k, v); } catch(e) {}
-        try { sessionStorage.setItem(k, v); } catch(e) {}
-        try {
-            let d = new Date(); d.setTime(d.getTime() + (3650*24*60*60*1000));
-            document.cookie = k + "=" + v + ";expires=" + d.toUTCString() + ";path=/;SameSite=Lax";
-        } catch(e) {}
-      },
-      clear: function() {
-        this.mem = {};
-        try { localStorage.clear(); } catch(e) {}
-        try { sessionStorage.clear(); } catch(e) {}
-        try {
-            let cookies = document.cookie.split(";");
-            for (let i = 0; i < cookies.length; i++) {
-                let cookie = cookies[i];
-                let eqPos = cookie.indexOf("=");
-                let name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-            }
-        } catch(e) {}
-      }
+      get: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
+      set: function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} },
+      clear: function() { try { localStorage.clear(); } catch(e) {} }
     };
 
     let currentDay = 1;
@@ -592,6 +572,7 @@
     let tempWeekRating = '3';
     let tempAppRating = '3';
     let currentSundayBingoSelections = [];
+    let isAdvancing = false; 
     
     // UI State Vars
     let activeVibeScore = 3;
@@ -941,18 +922,10 @@
         let todayDate = new Date(startDate);
         todayDate.setDate(startDate.getDate() + (currentDay - 1));
         
-        let shouldShowGoals = false;
-        if (currentDay === 1) {
-            shouldShowGoals = true;
-        } else {
-            let yesterday = new Date(startDate);
-            yesterday.setDate(startDate.getDate() + (currentDay - 2));
-            if (todayDate.getMonth() !== yesterday.getMonth()) {
-                shouldShowGoals = true;
-            }
-        }
+        let goalsSet = safeStore.get(`goalsSetFor_${todayDate.getFullYear()}_${todayDate.getMonth()}`);
 
-        if (shouldShowGoals && !safeStore.get(`goalsSetFor_${todayDate.getFullYear()}_${todayDate.getMonth()}`)) {
+        // Bulletproof check: If you haven't set goals for the month that "todayDate" falls into, you must do it now.
+        if (!goalsSet) {
             buildRandomizedGoals();
             showScreen('screen-monthly-goals');
         } else {
@@ -1488,6 +1461,9 @@
     }
 
     function advanceFromClimax() {
+      if (isAdvancing) return;
+      isAdvancing = true;
+
       let todayDate = new Date(startDate); todayDate.setDate(startDate.getDate() + (currentDay - 1));
       let tomorrow = new Date(todayDate); tomorrow.setDate(tomorrow.getDate() + 1);
       
@@ -1496,10 +1472,14 @@
 
       if (isEndOfMonth) {
         buildGoalReviewScreen(todayDate);
+        isAdvancing = false;
       } else if (isSunday) {
         openSundayBingo();
+        isAdvancing = false;
       } else {
         currentDay++; safeStore.set('currentDay', currentDay); buildDashboard(); showScreen('screen-dashboard');
+        // Lock progression for 1 second to block double-taps
+        setTimeout(() => { isAdvancing = false; }, 1000);
       }
     }
 
@@ -1827,9 +1807,15 @@
     }
 
     function finishMilestone() {
+      if (isAdvancing) return;
+      isAdvancing = true;
+
       currentDay++; safeStore.set('currentDay', currentDay); milestoneSetup.baseImageBase64 = '';
       document.getElementById('generated-milestone-img').style.display = 'none'; document.getElementById('image-display-container').style.display = 'none'; document.getElementById('finale-buttons').style.display = 'none'; document.getElementById('weekly-prompt-container').style.display = 'none'; document.getElementById('weekly-upload-container').style.display = 'none'; document.getElementById('finale-revelation-text').innerText = '';
       document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork(); buildDashboard(); showScreen('screen-dashboard');
+      
+      // Lock progression for 1 second to block double-taps
+      setTimeout(() => { isAdvancing = false; }, 1000);
     }
 
     window.addEventListener('DOMContentLoaded', function() {
@@ -1847,12 +1833,19 @@
             try { allEntries = JSON.parse(savedEntries); } catch(e) { allEntries = []; }
         }
 
+        // --- AUTO-HEAL GLITCHED DAYS ---
+        if (Array.isArray(allEntries) && currentDay > allEntries.length + 1) {
+            currentDay = allEntries.length + 1;
+            safeStore.set('currentDay', currentDay);
+        }
+
         if (hasMasterAccess === 'true' || safeStore.get('dev_mode') === 'true') {
             isDevMode = safeStore.get('dev_mode') === 'true'; 
             if (localPin || isDevMode) {
                 if (isDevMode && setupStr) { document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork(); }
                 
-                document.getElementById('boot-loader').style.display = 'flex';
+                const bootLoader = document.getElementById('boot-loader');
+                if (bootLoader) bootLoader.style.display = 'flex';
                 
                 showScreen('screen-local-lock');
             } else { 
