@@ -48,6 +48,7 @@
     .map-node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; position: relative; z-index: 2; flex-shrink: 0; user-select: none; -webkit-user-select: none; }
     .map-node.completed { background-color: var(--ink-color); color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     .map-node.locked { background-color: rgba(255,255,255,0.8); color: var(--text-main); opacity: 1; border: 1px solid var(--border-light); cursor: not-allowed; }
+    .map-node.available { background-color: transparent; color: var(--ink-color); border: 2px solid var(--ink-color); opacity: 0.8; }
     .map-node.past-ignored { background-color: transparent; color: var(--text-muted); opacity: 0.3; border: 1px dashed var(--border-light); cursor: not-allowed; }
 
     /* Super Glow Active Date Animation */
@@ -372,7 +373,7 @@
         <button type="button" onclick="triggerHaptic(); exportVault()" style="background: transparent; color: var(--ink-color); border: 1px solid var(--ink-color); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">⬇ Backup</button>
         <button type="button" onclick="triggerHaptic(); openArchiveModal()" style="background: transparent; color: var(--ink-color); border: 1px solid var(--ink-color); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">📚 Archives</button>
         <button type="button" onclick="triggerHaptic(); resetApp()" style="background: transparent; color: #e53e3e; border: 1px solid #e53e3e; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">⚠️ Reset App</button>
-        <!-- TEMPORARY FIX BUTTON -->
+        <!-- FIX CALENDAR BUTTON -->
         <button type="button" id="temp-fix-btn" onclick="triggerHaptic(); fixCalendarOffset()" style="background: var(--text-main); color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">🔧 Fix Calendar</button>
       </div>
       <div id="journey-map-container" style="text-align: left; max-width: 600px; margin: 0 auto;"></div>
@@ -563,7 +564,6 @@
       clear: function() { try { localStorage.clear(); } catch(e) {} }
     };
 
-    let currentDay = 1;
     let startDate = new Date();
     let userSetup = { color: '#d97757', bgColor: '#fcf4f1', gender: 'Female', apiKey: '' };
     let milestoneSetup = { artStyle: 'Studio Ghibli Watercolor', baseImageBase64: '' };
@@ -710,7 +710,6 @@
             try {
                 let savedSetup = JSON.parse(setupStr); savedSetup.apiKey = userSetup.apiKey || savedSetup.apiKey; userSetup = savedSetup; applyUserTheme();
                 const savedStart = safeStore.get('startDate'); if (savedStart) startDate = new Date(savedStart);
-                const savedDay = safeStore.get('currentDay'); if (savedDay) currentDay = parseInt(savedDay);
                 document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork();
                 checkStartOfMonthFlow();
             } catch(e) { showScreen('screen-onboarding'); }
@@ -728,7 +727,6 @@
                 try {
                     userSetup = JSON.parse(setupStr); applyUserTheme();
                     const savedStart = safeStore.get('startDate'); if (savedStart) startDate = new Date(savedStart);
-                    const savedDay = safeStore.get('currentDay'); if (savedDay) currentDay = parseInt(savedDay);
                     document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork();
                     checkStartOfMonthFlow();
                 } catch(e) { showScreen('screen-onboarding'); }
@@ -743,7 +741,7 @@
     }
 
     function exportVault() {
-        const data = { setup: safeStore.get('journalSetup'), startDate: safeStore.get('startDate'), currentDay: safeStore.get('currentDay'), entries: safeStore.get('allEntries') };
+        const data = { setup: safeStore.get('journalSetup'), startDate: safeStore.get('startDate'), entries: safeStore.get('allEntries') };
         const blob = new Blob([JSON.stringify(data)], {type: 'application/json'}); const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = 'Moments_Backup.json'; a.click();
     }
@@ -755,7 +753,6 @@
                 const data = JSON.parse(e.target.result);
                 if (data.setup) safeStore.set('journalSetup', data.setup);
                 if (data.startDate) safeStore.set('startDate', data.startDate);
-                if (data.currentDay) safeStore.set('currentDay', data.currentDay);
                 if (data.entries) safeStore.set('allEntries', data.entries);
                 safeStore.set('master_access', 'true'); safeStore.set('dev_mode', 'true');
                 alert('Backup restored successfully! The app will now reload into your vault.'); window.location.reload();
@@ -886,8 +883,7 @@
       const btn = document.getElementById('milestone-advance-btn');
       btn.innerText = "Weaving Keepsake..."; btn.disabled = true;
 
-      let todayDate = new Date(startDate);
-      todayDate.setDate(startDate.getDate() + (currentDay - 1));
+      let todayDate = new Date();
       let monthKey = `${todayDate.getFullYear()}-${todayDate.getMonth()}`;
       let monthName = `${monthNames[todayDate.getMonth()]} ${todayDate.getFullYear()}`;
 
@@ -921,12 +917,9 @@
     }
 
     function checkStartOfMonthFlow() {
-        let todayDate = new Date(startDate);
-        todayDate.setDate(startDate.getDate() + (currentDay - 1));
-        
-        let goalsSet = safeStore.get(`goalsSetFor_${todayDate.getFullYear()}_${todayDate.getMonth()}`);
+        let realToday = new Date();
+        let goalsSet = safeStore.get(`goalsSetFor_${realToday.getFullYear()}_${realToday.getMonth()}`);
 
-        // Bulletproof check: If you haven't set goals for the month that "todayDate" falls into, you must do it now.
         if (!goalsSet) {
             buildRandomizedGoals();
             showScreen('screen-monthly-goals');
@@ -953,10 +946,9 @@
         document.querySelectorAll('.goal-check-label input:checked').forEach(b => selected.push(b.value));
         if(selected.length === 0) selected = ["Be present"]; 
         
-        let todayDate = new Date(startDate);
-        todayDate.setDate(startDate.getDate() + (currentDay - 1));
-        safeStore.set(`goals_${todayDate.getFullYear()}_${todayDate.getMonth()}`, JSON.stringify(selected));
-        safeStore.set(`goalsSetFor_${todayDate.getFullYear()}_${todayDate.getMonth()}`, "true");
+        let realToday = new Date();
+        safeStore.set(`goals_${realToday.getFullYear()}_${realToday.getMonth()}`, JSON.stringify(selected));
+        safeStore.set(`goalsSetFor_${realToday.getFullYear()}_${realToday.getMonth()}`, "true");
         
         buildDashboard();
         showScreen('screen-dashboard');
@@ -1004,6 +996,10 @@
         const textEl = document.getElementById('daily-affirmation-text');
         const canvas = document.getElementById('scratch-canvas');
         
+        let startD = new Date(startDate); startD.setHours(0,0,0,0);
+        let todayD = new Date(); todayD.setHours(0,0,0,0);
+        let currentDayNum = Math.floor((todayD.getTime() - startD.getTime()) / (1000 * 3600 * 24)) + 1;
+
         let dailyAffirmation = "";
 
         try {
@@ -1015,7 +1011,7 @@
             
             if (rows.length > 1) {
                 const dataRows = rows.slice(1);
-                let daySeed = currentDay % dataRows.length;
+                let daySeed = currentDayNum % dataRows.length;
                 dailyAffirmation = dataRows[daySeed].split(',')[0]; 
             }
         } catch(err) { 
@@ -1023,13 +1019,13 @@
         }
 
         if (!dailyAffirmation) {
-            let daySeed = currentDay % masterAffirmations.length;
+            let daySeed = currentDayNum % masterAffirmations.length;
             dailyAffirmation = masterAffirmations[daySeed];
         }
         
         textEl.innerText = `"${dailyAffirmation}"`;
 
-        const isScratched = safeStore.get('affirmation_scratched_' + currentDay);
+        const isScratched = safeStore.get('affirmation_scratched_' + currentDayNum);
         if (isScratched === 'true') {
             canvas.style.display = 'none';
             return;
@@ -1088,7 +1084,7 @@
             if (percent > 40) {
                 triggerHaptic();
                 canvas.classList.add('revealed');
-                safeStore.set('affirmation_scratched_' + currentDay, 'true');
+                safeStore.set('affirmation_scratched_' + currentDayNum, 'true');
             }
         }
 
@@ -1098,24 +1094,6 @@
         canvas.addEventListener('touchstart', startPosition, {passive: false});
         canvas.addEventListener('touchend', endPosition);
         canvas.addEventListener('touchmove', scratch, {passive: false});
-    }
-
-    function canAccessToday() {
-      let targetDate = new Date(startDate); 
-      targetDate.setDate(startDate.getDate() + (currentDay - 1)); 
-      targetDate.setHours(0, 0, 0, 0);
-      
-      let realToday = new Date(); 
-      realToday.setHours(0, 0, 0, 0);
-
-      // STRICT CALENDAR MATCH: Never allow access to a future date.
-      if (targetDate.getTime() > realToday.getTime()) {
-        alert("This moment belongs to tomorrow. Please wait until the calendar date matches.");
-        return false;
-      }
-
-      // CATCH UP WITHOUT LAG: If the date is today or in the past, grant immediate access.
-      return true;
     }
 
     function selectSetupOption(groupId, btnElement, value) {
@@ -1128,7 +1106,6 @@
       safeStore.set('journalSetup', JSON.stringify(userSetup));
       
       // SHIELD: Only set a new start date if one doesn't already exist.
-      // T-2 START: Give users a 2-day head start so they can backfill past entries immediately.
       if (!safeStore.get('startDate')) {
           let initDate = new Date();
           initDate.setDate(initDate.getDate() - 2); 
@@ -1142,12 +1119,12 @@
     }
 
     function checkTimeCapsule() {
-       const capsuleStr = safeStore.get('timeCapsule_day_' + currentDay);
+       const capsuleStr = safeStore.get('timeCapsule_day_' + window.pendingFillDay);
        if (capsuleStr) {
            document.getElementById('time-capsule-message').innerText = `"${capsuleStr}"`;
            const modal = document.getElementById('time-capsule-modal');
            modal.style.display = 'flex'; modal.style.animation = 'fadeIn 0.4s ease';
-           safeStore.set('timeCapsule_day_' + currentDay, ''); 
+           safeStore.set('timeCapsule_day_' + window.pendingFillDay, ''); 
        }
     }
 
@@ -1157,7 +1134,11 @@
       const container = document.getElementById('journey-map-container');
       container.innerHTML = ''; 
       let startYear = startDate.getFullYear(); let startMonth = startDate.getMonth();
-      let targetDate = new Date(startDate); targetDate.setDate(startDate.getDate() + (currentDay - 1));
+      
+      let realToday = new Date();
+      realToday.setHours(0,0,0,0);
+      let startCompare = new Date(startDate);
+      startCompare.setHours(0,0,0,0);
 
       for (let mOffset = 0; mOffset < 12; mOffset++) {
           let monthDate = new Date(startYear, startMonth + mOffset, 1);
@@ -1186,32 +1167,49 @@
 
           for (let d = 1; d <= daysInMonth; d++) {
               let nodeDate = new Date(y, m, d); nodeDate.setHours(0,0,0,0);
-              let startCompare = new Date(startDate); startCompare.setHours(0,0,0,0);
-              let targetCompare = new Date(targetDate); targetCompare.setHours(0,0,0,0);
-
+              
+              let diffTime = nodeDate.getTime() - startCompare.getTime();
+              let nodeDayNumber = Math.floor(diffTime / (1000 * 3600 * 24)) + 1;
+              let isCompleted = allEntries.some(e => e.day === nodeDayNumber);
+              
               let node = document.createElement('div');
               let isSunday = nodeDate.getDay() === 0;
 
               if (nodeDate < startCompare) {
-                  node.className = 'map-node past-ignored'; if (isSunday) node.classList.add('sunday-bingo'); node.innerHTML = d;
-              } else if (nodeDate.getTime() === targetCompare.getTime()) {
-                  node.className = 'map-node active'; if (isSunday) node.classList.add('sunday-bingo'); node.innerHTML = d;
-                  node.onclick = function() { 
-                    triggerHaptic();
-                    if (canAccessToday()) {
-                      checkTimeCapsule(); 
-                      document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork();
-                      // RESET SLIDER to Balanced (3) by default
-                      document.getElementById('vibe-slider').value = 3;
-                      updateSunVibe(3);
-                      showScreen('screen-energy'); 
-                    }
-                  };
-              } else if (nodeDate < targetCompare) {
-                  node.className = 'map-node completed'; if (isSunday) node.classList.add('sunday-bingo'); node.innerHTML = '✓';
+                  node.className = 'map-node past-ignored'; node.innerHTML = d;
+              } else if (nodeDate.getTime() === realToday.getTime()) {
+                  if (isCompleted) {
+                      node.className = 'map-node completed'; node.innerHTML = '✓';
+                  } else {
+                      node.className = 'map-node active'; node.innerHTML = d;
+                      node.onclick = function() { 
+                        triggerHaptic(); 
+                        window.pendingFillDay = nodeDayNumber; 
+                        checkTimeCapsule(); 
+                        document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork();
+                        document.getElementById('vibe-slider').value = 3; updateSunVibe(3);
+                        showScreen('screen-energy'); 
+                      };
+                  }
+              } else if (nodeDate < realToday) {
+                  if (isCompleted) {
+                      node.className = 'map-node completed'; node.innerHTML = '✓';
+                  } else {
+                      node.className = 'map-node available'; node.innerHTML = d;
+                      node.onclick = function() { 
+                        triggerHaptic(); 
+                        window.pendingFillDay = nodeDayNumber; 
+                        checkTimeCapsule(); 
+                        document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork();
+                        document.getElementById('vibe-slider').value = 3; updateSunVibe(3);
+                        showScreen('screen-energy'); 
+                      };
+                  }
               } else {
-                  node.className = 'map-node locked'; if (isSunday) node.classList.add('sunday-bingo'); node.innerHTML = d;
+                  node.className = 'map-node locked'; node.innerHTML = d;
               }
+              
+              if (isSunday) node.classList.add('sunday-bingo');
               gridNode.appendChild(node);
           }
       }
@@ -1259,7 +1257,7 @@
 
     function openJournalToday(mode) {
       tempDailyPhotoBase64 = ""; 
-      document.getElementById('journal-day-title').innerText = `Day ${currentDay}`;
+      document.getElementById('journal-day-title').innerText = `Day ${window.pendingFillDay}`;
       const container = document.getElementById('journal-dynamic-content');
       
       let html = `<div class="section-title">The Standout Thing</div><div class="question-block"><div class="question-text">What stands out most about today? Name a specific detail:</div><input type="text" id="anchor-input" class="journal-input" placeholder="Today I noticed..."></div>`;
@@ -1407,7 +1405,7 @@
       const btn = document.getElementById('seal-btn'); btn.innerText = "Encrypting & Analyzing..."; btn.disabled = true;
 
       let entryData = {
-        day: currentDay, energy: activeEnergyMode, friction: activeFriction,
+        day: window.pendingFillDay, energy: activeEnergyMode, friction: activeFriction,
         anchor: document.getElementById('anchor-input') ? document.getElementById('anchor-input').value.trim() : "",
         rant: document.getElementById('vent-input') ? document.getElementById('vent-input').value.trim() : "",
         dailyPhoto: tempDailyPhotoBase64, 
@@ -1453,18 +1451,25 @@
         entryData.quote = parsed.quote || "Every moment is a fresh beginning."; entryData.author = parsed.author || "T.S. Eliot"; entryData.echo = parsed.echo || "Your day has been safely recorded.";
         document.getElementById('climax-echo-text').innerText = entryData.echo; document.getElementById('climax-review-text').innerText = parsed.review || "A meaningful entry archived into your passing days."; document.getElementById('climax-quote-text').innerText = `"${entryData.quote}"`; document.getElementById('climax-quote-author').innerText = `- ${entryData.author}`;
       } catch (err) {
-        entryData.quote = "Adopt the pace of nature: her secret is patience."; entryData.author = "Ralph Waldo Emerson"; entryData.echo = "The day is sealed securely in your vault.";
+        entryData.quote = "Adopt the pace of nature: her secret is patience."; entryData.author = "Ralph Emerson"; entryData.echo = "The day is sealed securely in your vault.";
         document.getElementById('climax-echo-text').innerText = entryData.echo; document.getElementById('climax-review-text').innerText = "You showed up for yourself today, recording a quiet piece of your journey."; document.getElementById('climax-quote-text').innerText = `"${entryData.quote}"`; document.getElementById('climax-quote-author').innerText = `- ${entryData.author}`;
       }
 
-      allEntries.push(entryData); safeStore.set('allEntries', JSON.stringify(allEntries));
+      // Add or update the entry for this specific day
+      let entryIndex = allEntries.findIndex(e => e.day === entryData.day);
+      if (entryIndex !== -1) {
+          allEntries[entryIndex] = entryData;
+      } else {
+          allEntries.push(entryData);
+      }
+      safeStore.set('allEntries', JSON.stringify(allEntries));
       recordEntryTime(); showScreen('screen-climax');
     }
 
     function downloadClimax() {
       const btn = document.getElementById('climax-download-btn'); const originalText = btn.innerText; btn.innerText = "Loading..."; btn.disabled = true;
       html2canvas(document.getElementById('climax-capture-area'), { useCORS: true, backgroundColor: null }).then(canvas => {
-        let link = document.createElement('a'); link.download = `Day_${currentDay}_Climax.png`; link.href = canvas.toDataURL("image/png"); link.click(); btn.innerText = originalText; btn.disabled = false;
+        let link = document.createElement('a'); link.download = `Day_${window.pendingFillDay}_Climax.png`; link.href = canvas.toDataURL("image/png"); link.click(); btn.innerText = originalText; btn.disabled = false;
       }).catch(err => { btn.innerText = originalText; btn.disabled = false; });
     }
 
@@ -1472,28 +1477,30 @@
       if (isAdvancing) return;
       isAdvancing = true;
 
-      let todayDate = new Date(startDate); todayDate.setDate(startDate.getDate() + (currentDay - 1));
-      let tomorrow = new Date(todayDate); tomorrow.setDate(tomorrow.getDate() + 1);
+      let filledDate = new Date(startDate); 
+      filledDate.setDate(startDate.getDate() + (window.pendingFillDay - 1));
+      let tomorrow = new Date(filledDate); 
+      tomorrow.setDate(tomorrow.getDate() + 1);
       
       let isEndOfMonth = tomorrow.getDate() === 1;
-      let isSunday = todayDate.getDay() === 0;
+      let isSunday = filledDate.getDay() === 0;
 
       if (isEndOfMonth) {
-        buildGoalReviewScreen(todayDate);
+        buildGoalReviewScreen(filledDate);
         isAdvancing = false;
       } else if (isSunday) {
         openSundayBingo();
         isAdvancing = false;
       } else {
-        currentDay++; safeStore.set('currentDay', currentDay); buildDashboard(); showScreen('screen-dashboard');
-        // Lock progression for 1 second to block double-taps
+        buildDashboard(); 
+        showScreen('screen-dashboard');
         setTimeout(() => { isAdvancing = false; }, 1000);
       }
     }
 
     // MONTHLY GOAL REVIEW (CARD STACK)
-    function buildGoalReviewScreen(todayDate) {
-        let savedGoalsStr = safeStore.get(`goals_${todayDate.getFullYear()}_${todayDate.getMonth()}`);
+    function buildGoalReviewScreen(filledDate) {
+        let savedGoalsStr = safeStore.get(`goals_${filledDate.getFullYear()}_${filledDate.getMonth()}`);
         reviewGoalsStack = savedGoalsStr ? JSON.parse(savedGoalsStr) : ["Be present"];
         currentReviewGoalIdx = 0;
         
@@ -1544,8 +1551,10 @@
     // COLLAGE CURATION
     function proceedToCollageCuration() {
         curatedPhotosForMonth = [];
-        let todayDate = new Date(startDate); todayDate.setDate(startDate.getDate() + (currentDay - 1));
-        const currentMonthIndex = todayDate.getMonth(); const currentYear = todayDate.getFullYear();
+        let filledDate = new Date(startDate); 
+        filledDate.setDate(startDate.getDate() + (window.pendingFillDay - 1));
+        const currentMonthIndex = filledDate.getMonth(); 
+        const currentYear = filledDate.getFullYear();
         
         const monthEntries = allEntries.filter(e => {
             let d = new Date(startDate.getTime() + (e.day - 1) * 86400000);
@@ -1661,9 +1670,9 @@
       const btn = document.getElementById('submit-review-btn');
       btn.innerText = "Sealing Vault..."; btn.disabled = true;
 
-      const weekNum = Math.ceil(currentDay / 7);
+      const weekNum = Math.ceil(window.pendingFillDay / 7);
       const capsuleNote = document.getElementById('time-capsule-input').value.trim();
-      if (capsuleNote) safeStore.set('timeCapsule_day_' + (currentDay + 1), capsuleNote);
+      if (capsuleNote) safeStore.set('timeCapsule_day_' + (window.pendingFillDay + 1), capsuleNote);
 
       if (allEntries.length > 0) {
           allEntries[allEntries.length - 1].bingoSummary = currentSundayBingoSelections.join(", ");
@@ -1797,7 +1806,11 @@
     }
 
     function generateMilestone() {
-      let todayDate = new Date(startDate); todayDate.setDate(startDate.getDate() + (currentDay - 1)); let tomorrow = new Date(todayDate); tomorrow.setDate(tomorrow.getDate() + 1);
+      let filledDate = new Date(startDate); 
+      filledDate.setDate(startDate.getDate() + (window.pendingFillDay - 1)); 
+      let tomorrow = new Date(filledDate); 
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
       if (tomorrow.getDate() === 1) { generateMonthlyCollage(); } else { generateWeeklyMilestone(); }
     }
 
@@ -1818,12 +1831,29 @@
       if (isAdvancing) return;
       isAdvancing = true;
 
-      currentDay++; safeStore.set('currentDay', currentDay); milestoneSetup.baseImageBase64 = '';
+      milestoneSetup.baseImageBase64 = '';
       document.getElementById('generated-milestone-img').style.display = 'none'; document.getElementById('image-display-container').style.display = 'none'; document.getElementById('finale-buttons').style.display = 'none'; document.getElementById('weekly-prompt-container').style.display = 'none'; document.getElementById('weekly-upload-container').style.display = 'none'; document.getElementById('finale-revelation-text').innerText = '';
-      document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork(); buildDashboard(); showScreen('screen-dashboard');
-      
-      // Lock progression for 1 second to block double-taps
+      document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork(); 
+      buildDashboard(); 
+      showScreen('screen-dashboard');
+
       setTimeout(() => { isAdvancing = false; }, 1000);
+    }
+    
+    function fixCalendarOffset() {
+        let e = JSON.parse(safeStore.get('allEntries')) || [];
+        let cleanEntries = [];
+        let seenDays = new Set();
+        for (let i = e.length - 1; i >= 0; i--) {
+            if (!seenDays.has(e[i].day)) {
+                cleanEntries.unshift(e[i]);
+                seenDays.add(e[i].day);
+            }
+        }
+        safeStore.set('allEntries', JSON.stringify(cleanEntries));
+        
+        alert("Calendar refreshed and synced to actual date.");
+        location.reload();
     }
 
     window.addEventListener('DOMContentLoaded', function() {
@@ -1831,48 +1861,20 @@
         const hasMasterAccess = safeStore.get('master_access'); 
         const localPin = safeStore.get('local_pin'); 
         const setupStr = safeStore.get('journalSetup');
-        const savedDay = safeStore.get('currentDay'); 
         const savedStart = safeStore.get('startDate');
         const savedEntries = safeStore.get('allEntries'); 
         
-        if (savedDay) currentDay = parseInt(savedDay); 
-        if (savedStart) startDate = new Date(savedStart);
         if (savedEntries) {
             try { allEntries = JSON.parse(savedEntries); } catch(e) { allEntries = []; }
         }
 
-        // --- INVISIBLE GLOBAL FIX (Runs once per user) ---
-        if (!safeStore.get('v2_date_fixed')) {
-            // 1. Fix the Start Date Offset Glitch
-            if (allEntries.length > 0 && savedStart) {
-                let stDate = new Date(savedStart);
-                let realToday = new Date(); 
-                realToday.setHours(0, 0, 0, 0);
-                
-                // Where does the app THINK their next entry should be based on entries completed?
-                let projectedNextDay = new Date(stDate);
-                projectedNextDay.setDate(stDate.getDate() + allEntries.length);
-                projectedNextDay.setHours(0, 0, 0, 0);
-
-                // If the glitch pushed their start date so far forward that they are locked out of today:
-                if (projectedNextDay.getTime() > realToday.getTime()) {
-                    let diffTime = projectedNextDay.getTime() - realToday.getTime();
-                    let diffDays = Math.ceil(diffTime / (1000 * 3600 * 24));
-                    
-                    // Rewind their start date by the exact number of glitched days
-                    stDate.setDate(stDate.getDate() - diffDays);
-                    safeStore.set('startDate', stDate.toISOString());
-                    startDate = stDate;
-                }
-            }
-            
-            // 2. Fix the Double-Tap Glitch (Snap currentDay back to reality)
-            if (Array.isArray(allEntries) && currentDay > allEntries.length + 1) {
-                currentDay = allEntries.length + 1;
-                safeStore.set('currentDay', currentDay);
-            }
-
-            safeStore.set('v2_date_fixed', 'true'); // Mark as healed so it never runs again
+        if (!savedStart) {
+            let initD = new Date();
+            initD.setDate(initD.getDate() - 2); 
+            startDate = initD;
+            safeStore.set('startDate', initD.toISOString());
+        } else {
+            startDate = new Date(savedStart);
         }
 
         if (hasMasterAccess === 'true' || safeStore.get('dev_mode') === 'true') {
@@ -1891,7 +1893,6 @@
             showScreen('screen-master-lock'); 
         }
 
-        // Fetch without blocking UI load
         asyncGetQuestionBank();
 
       } catch (e) { 
