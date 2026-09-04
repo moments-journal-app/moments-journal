@@ -372,6 +372,8 @@
         <button type="button" onclick="triggerHaptic(); exportVault()" style="background: transparent; color: var(--ink-color); border: 1px solid var(--ink-color); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">⬇ Backup</button>
         <button type="button" onclick="triggerHaptic(); openArchiveModal()" style="background: transparent; color: var(--ink-color); border: 1px solid var(--ink-color); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">📚 Archives</button>
         <button type="button" onclick="triggerHaptic(); resetApp()" style="background: transparent; color: #e53e3e; border: 1px solid #e53e3e; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">⚠️ Reset App</button>
+        <!-- TEMPORARY FIX BUTTON -->
+        <button type="button" id="temp-fix-btn" onclick="triggerHaptic(); fixCalendarOffset()" style="background: var(--text-main); color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">🔧 Fix Calendar</button>
       </div>
       <div id="journey-map-container" style="text-align: left; max-width: 600px; margin: 0 auto;"></div>
     </div>
@@ -1099,11 +1101,20 @@
     }
 
     function canAccessToday() {
-      let targetDate = new Date(startDate); targetDate.setDate(startDate.getDate() + (currentDay - 1)); targetDate.setHours(0, 0, 0, 0);
-      let realToday = new Date(); realToday.setHours(0, 0, 0, 0);
+      let targetDate = new Date(startDate); 
+      targetDate.setDate(startDate.getDate() + (currentDay - 1)); 
+      targetDate.setHours(0, 0, 0, 0);
+      
+      let realToday = new Date(); 
+      realToday.setHours(0, 0, 0, 0);
 
-      if (targetDate.getTime() <= realToday.getTime()) return true;
+      // 1. STRICT FUTURE BLOCK: Never allow access to tomorrow.
+      if (targetDate.getTime() > realToday.getTime()) {
+        alert("This moment belongs to tomorrow. Please wait until then to open the next entry.");
+        return false;
+      }
 
+      // 2. PACING BLOCK: Enforce 10 hours between entries.
       let recentEntries = [];
       try { recentEntries = JSON.parse(safeStore.get('recentEntriesTimes')) || []; } catch (e) {}
 
@@ -1127,7 +1138,12 @@
 
     function completeOnboarding() {
       safeStore.set('journalSetup', JSON.stringify(userSetup));
-      safeStore.set('startDate', startDate.toISOString());
+      
+      // SHIELD: Only set a new start date if one doesn't already exist.
+      if (!safeStore.get('startDate')) {
+          safeStore.set('startDate', startDate.toISOString());
+      }
+      
       document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork();
       buildDashboard();
       checkStartOfMonthFlow();
@@ -1816,6 +1832,23 @@
       
       // Lock progression for 1 second to block double-taps
       setTimeout(() => { isAdvancing = false; }, 1000);
+    }
+    
+    // TEMPORARY FIX BUTTON FUNCTION
+    function fixCalendarOffset() {
+        let sd = new Date(safeStore.get('startDate') || Date.now()); 
+        sd.setDate(sd.getDate() - 1); 
+        safeStore.set('startDate', sd.toISOString()); 
+        
+        let e = JSON.parse(safeStore.get('allEntries')) || []; 
+        if (e.length > 0) { e = [e[0]]; } // Erases accidental double-taps
+        safeStore.set('allEntries', JSON.stringify(e));
+        
+        safeStore.set('currentDay', e.length + 1); 
+        safeStore.set('recentEntriesTimes', '[]'); 
+        
+        alert("Calendar successfully realigned!");
+        location.reload();
     }
 
     window.addEventListener('DOMContentLoaded', function() {
