@@ -1108,25 +1108,13 @@
       let realToday = new Date(); 
       realToday.setHours(0, 0, 0, 0);
 
-      // 1. STRICT FUTURE BLOCK: Never allow access to tomorrow.
+      // STRICT CALENDAR MATCH: Never allow access to a future date.
       if (targetDate.getTime() > realToday.getTime()) {
-        alert("This moment belongs to tomorrow. Please wait until then to open the next entry.");
+        alert("This moment belongs to tomorrow. Please wait until the calendar date matches.");
         return false;
       }
 
-      // 2. PACING BLOCK: Enforce 10 hours between entries.
-      let recentEntries = [];
-      try { recentEntries = JSON.parse(safeStore.get('recentEntriesTimes')) || []; } catch (e) {}
-
-      if (recentEntries.length > 0) {
-        let lastEntryTime = recentEntries[recentEntries.length - 1];
-        let hoursPassed = (Date.now() - lastEntryTime) / 3600000;
-        if (hoursPassed < 10) {
-          let timeToWait = Math.ceil(10 - hoursPassed);
-          alert(`You are ahead of schedule! Return in ${timeToWait} hours to unlock the next day.`);
-          return false;
-        }
-      }
+      // CATCH UP WITHOUT LAG: If the date is today or in the past, grant immediate access.
       return true;
     }
 
@@ -1140,8 +1128,12 @@
       safeStore.set('journalSetup', JSON.stringify(userSetup));
       
       // SHIELD: Only set a new start date if one doesn't already exist.
+      // T-2 START: Give users a 2-day head start so they can backfill past entries immediately.
       if (!safeStore.get('startDate')) {
-          safeStore.set('startDate', startDate.toISOString());
+          let initDate = new Date();
+          initDate.setDate(initDate.getDate() - 2); 
+          safeStore.set('startDate', initDate.toISOString());
+          startDate = initDate;
       }
       
       document.getElementById('dashboard-art').style.backgroundImage = getRandomArtwork();
@@ -1833,23 +1825,6 @@
       // Lock progression for 1 second to block double-taps
       setTimeout(() => { isAdvancing = false; }, 1000);
     }
-    
-    // TEMPORARY FIX BUTTON FUNCTION
-    function fixCalendarOffset() {
-        let sd = new Date(safeStore.get('startDate') || Date.now()); 
-        sd.setDate(sd.getDate() - 1); 
-        safeStore.set('startDate', sd.toISOString()); 
-        
-        let e = JSON.parse(safeStore.get('allEntries')) || []; 
-        if (e.length > 0) { e = [e[0]]; } // Erases accidental double-taps
-        safeStore.set('allEntries', JSON.stringify(e));
-        
-        safeStore.set('currentDay', e.length + 1); 
-        safeStore.set('recentEntriesTimes', '[]'); 
-        
-        alert("Calendar successfully realigned!");
-        location.reload();
-    }
 
     window.addEventListener('DOMContentLoaded', function() {
       try {
@@ -1866,10 +1841,38 @@
             try { allEntries = JSON.parse(savedEntries); } catch(e) { allEntries = []; }
         }
 
-        // --- AUTO-HEAL GLITCHED DAYS ---
-        if (Array.isArray(allEntries) && currentDay > allEntries.length + 1) {
-            currentDay = allEntries.length + 1;
-            safeStore.set('currentDay', currentDay);
+        // --- INVISIBLE GLOBAL FIX (Runs once per user) ---
+        if (!safeStore.get('v2_date_fixed')) {
+            // 1. Fix the Start Date Offset Glitch
+            if (allEntries.length > 0 && savedStart) {
+                let stDate = new Date(savedStart);
+                let realToday = new Date(); 
+                realToday.setHours(0, 0, 0, 0);
+                
+                // Where does the app THINK their next entry should be based on entries completed?
+                let projectedNextDay = new Date(stDate);
+                projectedNextDay.setDate(stDate.getDate() + allEntries.length);
+                projectedNextDay.setHours(0, 0, 0, 0);
+
+                // If the glitch pushed their start date so far forward that they are locked out of today:
+                if (projectedNextDay.getTime() > realToday.getTime()) {
+                    let diffTime = projectedNextDay.getTime() - realToday.getTime();
+                    let diffDays = Math.ceil(diffTime / (1000 * 3600 * 24));
+                    
+                    // Rewind their start date by the exact number of glitched days
+                    stDate.setDate(stDate.getDate() - diffDays);
+                    safeStore.set('startDate', stDate.toISOString());
+                    startDate = stDate;
+                }
+            }
+            
+            // 2. Fix the Double-Tap Glitch (Snap currentDay back to reality)
+            if (Array.isArray(allEntries) && currentDay > allEntries.length + 1) {
+                currentDay = allEntries.length + 1;
+                safeStore.set('currentDay', currentDay);
+            }
+
+            safeStore.set('v2_date_fixed', 'true'); // Mark as healed so it never runs again
         }
 
         if (hasMasterAccess === 'true' || safeStore.get('dev_mode') === 'true') {
