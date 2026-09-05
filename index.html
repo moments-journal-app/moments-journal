@@ -373,7 +373,6 @@
       <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap;">
         <button type="button" onclick="triggerHaptic(); exportVault()" style="background: transparent; color: var(--ink-color); border: 1px solid var(--ink-color); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">⬇ Backup</button>
         <button type="button" onclick="triggerHaptic(); openArchiveModal()" style="background: transparent; color: var(--ink-color); border: 1px solid var(--ink-color); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">📚 Archives</button>
-        <button type="button" id="temp-fix-btn" onclick="triggerHaptic(); fixCalendarOffset()" style="background: var(--text-main); color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">🔧 Fix Calendar</button>
       </div>
       <div id="journey-map-container" style="text-align: left; max-width: 600px; margin: 0 auto;"></div>
     </div>
@@ -574,6 +573,7 @@
     let tempAppRating = '3';
     let currentSundayBingoSelections = [];
     let isAdvancing = false; 
+    window.pendingFillDay = 1;
     
     // UI State Vars
     let activeVibeScore = 3;
@@ -882,8 +882,7 @@
       const btn = document.getElementById('milestone-advance-btn');
       btn.innerText = "Weaving Keepsake..."; btn.disabled = true;
 
-      let todayDate = new Date(startDate);
-      todayDate.setDate(startDate.getDate() + (window.pendingFillDay - 1));
+      let todayDate = new Date();
       let monthKey = `${todayDate.getFullYear()}-${todayDate.getMonth()}`;
       let monthName = `${monthNames[todayDate.getMonth()]} ${todayDate.getFullYear()}`;
 
@@ -1264,7 +1263,7 @@
 
       // HEAVY DAY GETS ONLY OFFLOAD
       if (mode === 'Heavy') {
-        html += `<div class="section-title">Offload Area</div><div class="question-block"><button type="button" class="mic-btn" onclick="startDictation('vent-input', this)">🎤 Tap to Speak</button><textarea id="vent-input" class="journal-input rant-input" rows="4" placeholder="Type or speak to offload..."></textarea></div></div>`;
+        html += `<div class="section-title">Offload Area</div><div class="question-block"><button type="button" class="mic-btn" onclick="startDictation('vent-input', this)">🎤 Tap to Speak</button><textarea id="vent-input" class="journal-input rant-input" rows="4" placeholder="Type or speak to offload..."></textarea></div>`;
       } else {
         html += `<div class="section-title">Reflections</div><div id="dynamic-questions-container"></div>`;
       }
@@ -1840,26 +1839,6 @@
       setTimeout(() => { isAdvancing = false; }, 1000);
     }
     
-    function fixCalendarOffset() {
-        let e = JSON.parse(safeStore.get('allEntries')) || [];
-        let cleanEntries = [];
-        let seenDays = new Set();
-        for (let i = e.length - 1; i >= 0; i--) {
-            if (!seenDays.has(e[i].day)) {
-                cleanEntries.unshift(e[i]);
-                seenDays.add(e[i].day);
-            }
-        }
-        safeStore.set('allEntries', JSON.stringify(cleanEntries));
-        
-        let sd = new Date(safeStore.get('startDate') || Date.now());
-        sd.setDate(sd.getDate() + 1);
-        safeStore.set('startDate', sd.toISOString());
-        
-        alert("Calendar shifted 1 day forward. If it is still incorrect, tap it again.");
-        location.reload();
-    }
-
     window.addEventListener('DOMContentLoaded', function() {
       try {
         const hasMasterAccess = safeStore.get('master_access'); 
