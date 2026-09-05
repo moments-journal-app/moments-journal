@@ -311,7 +311,8 @@
         
         <div style="width: 100%; max-width: 300px; text-align: center; border-top: 1px solid var(--border-light); padding-top: 1.5rem;">
           <input type="file" id="local-import-file" style="display: none;" accept=".json" onchange="importVault(event)">
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Device wiped? <a href="#" onclick="event.preventDefault(); document.getElementById('local-import-file').click();" style="color: var(--ink-color); font-weight: 700; text-decoration: none;">Restore Backup</a></p>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; padding-bottom: 8px;">Device wiped? <a href="#" onclick="event.preventDefault(); document.getElementById('local-import-file').click();" style="color: var(--ink-color); font-weight: 700; text-decoration: none;">Restore Backup</a></p>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">App locked? <a href="#" onclick="event.preventDefault(); resetApp();" style="color: #e53e3e; font-weight: 700; text-decoration: none;">Hard Reset</a></p>
         </div>
     </div>
   </div>
@@ -372,8 +373,6 @@
       <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap;">
         <button type="button" onclick="triggerHaptic(); exportVault()" style="background: transparent; color: var(--ink-color); border: 1px solid var(--ink-color); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">⬇ Backup</button>
         <button type="button" onclick="triggerHaptic(); openArchiveModal()" style="background: transparent; color: var(--ink-color); border: 1px solid var(--ink-color); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">📚 Archives</button>
-        <button type="button" onclick="triggerHaptic(); resetApp()" style="background: transparent; color: #e53e3e; border: 1px solid #e53e3e; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">⚠️ Reset App</button>
-        <!-- FIX CALENDAR BUTTON -->
         <button type="button" id="temp-fix-btn" onclick="triggerHaptic(); fixCalendarOffset()" style="background: var(--text-main); color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;">🔧 Fix Calendar</button>
       </div>
       <div id="journey-map-container" style="text-align: left; max-width: 600px; margin: 0 auto;"></div>
@@ -883,7 +882,8 @@
       const btn = document.getElementById('milestone-advance-btn');
       btn.innerText = "Weaving Keepsake..."; btn.disabled = true;
 
-      let todayDate = new Date();
+      let todayDate = new Date(startDate);
+      todayDate.setDate(startDate.getDate() + (window.pendingFillDay - 1));
       let monthKey = `${todayDate.getFullYear()}-${todayDate.getMonth()}`;
       let monthName = `${monthNames[todayDate.getMonth()]} ${todayDate.getFullYear()}`;
 
@@ -1264,7 +1264,7 @@
 
       // HEAVY DAY GETS ONLY OFFLOAD
       if (mode === 'Heavy') {
-        html += `<div class="section-title">Offload Area</div><div class="question-block"><button type="button" class="mic-btn" onclick="startDictation('vent-input', this)">🎤 Tap to Speak</button><textarea id="vent-input" class="journal-input rant-input" rows="4" placeholder="Type or speak to offload..."></textarea></div>`;
+        html += `<div class="section-title">Offload Area</div><div class="question-block"><button type="button" class="mic-btn" onclick="startDictation('vent-input', this)">🎤 Tap to Speak</button><textarea id="vent-input" class="journal-input rant-input" rows="4" placeholder="Type or speak to offload..."></textarea></div></div>`;
       } else {
         html += `<div class="section-title">Reflections</div><div id="dynamic-questions-container"></div>`;
       }
@@ -1852,7 +1852,11 @@
         }
         safeStore.set('allEntries', JSON.stringify(cleanEntries));
         
-        alert("Calendar refreshed and synced to actual date.");
+        let sd = new Date(safeStore.get('startDate') || Date.now());
+        sd.setDate(sd.getDate() + 1);
+        safeStore.set('startDate', sd.toISOString());
+        
+        alert("Calendar shifted 1 day forward. If it is still incorrect, tap it again.");
         location.reload();
     }
 
