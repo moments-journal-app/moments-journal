@@ -311,6 +311,7 @@
         
         <div style="width: 100%; max-width: 300px; text-align: center; border-top: 1px solid var(--border-light); padding-top: 1.5rem;">
           <input type="file" id="local-import-file" style="display: none;" accept=".json" onchange="importVault(event)">
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; padding-bottom: 8px;">Forgot PIN? <a href="#" onclick="event.preventDefault(); forgotPinPrompt();" style="color: var(--ink-color); font-weight: 700; text-decoration: none;">Reset via Invite Code</a></p>
           <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; padding-bottom: 8px;">Device wiped? <a href="#" onclick="event.preventDefault(); document.getElementById('local-import-file').click();" style="color: var(--ink-color); font-weight: 700; text-decoration: none;">Restore Backup</a></p>
           <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">App locked? <a href="#" onclick="event.preventDefault(); resetApp();" style="color: #e53e3e; font-weight: 700; text-decoration: none;">Hard Reset</a></p>
         </div>
@@ -731,6 +732,21 @@
                 } catch(e) { showScreen('screen-onboarding'); }
             } else { showScreen('screen-onboarding'); }
         } else { errorMsg.innerText = "Incorrect PIN."; errorMsg.style.display = 'block'; document.getElementById('local-pin-input').value = ''; }
+    }
+
+    function forgotPinPrompt() {
+      triggerHaptic();
+      const code = prompt("Enter your original Invite Code to reset your PIN:");
+      if (!code) return;
+      if (code.trim().toUpperCase() === "FG-VIP-TEST" || code.trim().toUpperCase() === "DEV-77" || code.trim().toUpperCase() === "TEST-MODE") {
+          safeStore.set('local_pin', '');
+          document.getElementById('pin-setup-input').value = '';
+          document.getElementById('pin-setup-error').style.display = 'none';
+          alert("Code accepted. Please set a new 4-digit PIN.");
+          showScreen('screen-pin-setup');
+      } else {
+          alert("Incorrect Invite Code.");
+      }
     }
 
     function resetApp() {
@@ -1259,13 +1275,19 @@
       document.getElementById('journal-day-title').innerText = `Day ${window.pendingFillDay}`;
       const container = document.getElementById('journal-dynamic-content');
       
-      let html = `<div class="section-title">The Standout Thing</div><div class="question-block"><div class="question-text">What stands out most about today? Name a specific detail:</div><input type="text" id="anchor-input" class="journal-input" placeholder="Today I noticed..."></div>`;
+      let html = '';
 
-      // HEAVY DAY GETS ONLY OFFLOAD
-      if (mode === 'Heavy') {
-        html += `<div class="section-title">Offload Area</div><div class="question-block"><button type="button" class="mic-btn" onclick="startDictation('vent-input', this)">🎤 Tap to Speak</button><textarea id="vent-input" class="journal-input rant-input" rows="4" placeholder="Type or speak to offload..."></textarea></div>`;
+      if (mode === 'Low-Key') {
+        html += `<div class="section-title">Low-Key</div><div class="question-block"><div class="question-text">Say something or anything at all. Or just one word or a phrase to describe today:</div><textarea id="anchor-input" class="journal-input" rows="3" placeholder="..."></textarea></div>`;
       } else {
-        html += `<div class="section-title">Reflections</div><div id="dynamic-questions-container"></div>`;
+        html += `<div class="section-title">The Standout Thing</div><div class="question-block"><div class="question-text">What stands out most about today? Name a specific detail:</div><input type="text" id="anchor-input" class="journal-input" placeholder="Today I noticed..."></div>`;
+
+        // HEAVY DAY GETS ONLY OFFLOAD
+        if (mode === 'Heavy') {
+          html += `<div class="section-title">Offload Area</div><div class="question-block"><button type="button" class="mic-btn" onclick="startDictation('vent-input', this)">🎤 Tap to Speak</button><textarea id="vent-input" class="journal-input rant-input" rows="4" placeholder="Type or speak to offload..."></textarea></div>`;
+        } else {
+          html += `<div class="section-title">Reflections</div><div id="dynamic-questions-container"></div>`;
+        }
       }
 
       html += `
@@ -1281,8 +1303,8 @@
       html += `<button type="button" class="btn" id="seal-btn" onclick="triggerHaptic(); sealEntry()" style="margin-top: 1.5rem;">Seal Today's Entry</button>`;
       container.innerHTML = html;
 
-      // DO NOT SHOW REFLECTIONS IF IT IS A HEAVY DAY
-      if (mode !== 'Heavy') {
+      // DO NOT SHOW REFLECTIONS IF IT IS A HEAVY OR LOW-KEY DAY
+      if (mode === 'Balanced' || mode === 'Radiant') {
         setTimeout(() => {
           let questionsToAsk = extractQuestions(mode);
           const dynamicDiv = document.getElementById('dynamic-questions-container');
