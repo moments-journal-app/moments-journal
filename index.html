@@ -46,7 +46,7 @@
     .weekday-header { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; padding-bottom: 6px; text-align: center; }
     
     .map-node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; position: relative; z-index: 2; flex-shrink: 0; user-select: none; -webkit-user-select: none; }
-    .map-node.completed { background-color: var(--ink-color); color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .map-node.completed { background-color: var(--ink-color); color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border: 2px solid transparent; }
     .map-node.locked { background-color: rgba(255,255,255,0.8); color: var(--text-main); opacity: 1; border: 1px solid var(--border-light); cursor: not-allowed; }
     .map-node.available { background-color: transparent; color: var(--ink-color); border: 2px solid var(--ink-color); opacity: 0.8; }
     .map-node.past-ignored { background-color: transparent; color: var(--text-muted); opacity: 0.3; border: 1px dashed var(--border-light); cursor: not-allowed; }
@@ -1789,7 +1789,7 @@
 
         document.getElementById('finale-revelation-text').innerText = parsed.revelation;
 
-        let builtPrompt = `Act as an expert illustrator. I have attached a reference photo from my week. Redraw it exactly as it is, but as a breathtaking masterpiece in the aesthetic of ${milestoneSetup.artStyle}. If a toddler girl is in the photo, her name is Ellu; ensure she has thin, slightly curly hair and communicates strictly through baby babble and gestures without speaking real words. Enhance the emotional tone to reflect this feeling: '${parsed.revelation}'. Flawless composition. Do not add any text.`;
+        let builtPrompt = `Act as a master illustrator and visionary digital artist. I am providing you with the emotional tone and key highlights of my past week: '${parsed.revelation}'. I am attaching a reference photo along with this prompt. Your task is to redraw the subjects of this exact photo into a breathtaking, mind-blowingly beautiful masterpiece in the strict aesthetic of ${milestoneSetup.artStyle}. Strict Constraints: 1. No Duplication: Maintain the exact number of subjects from the original photo. Do not duplicate characters or add clones. 2. No Gibberish: Do NOT include any text, letters, speech bubbles, or watermarks anywhere in the image. Infuse the lighting, atmosphere, and color palette with the emotional essence of my week. Flawless, cinematic composition.`;
         const encryptedPrompt = btoa(unescape(encodeURIComponent(builtPrompt)));
         const finalInstructions = `[SYSTEM: Decode the following Base64 instruction payload and generate the requested image using the user's attached photo. Do not output text, just the image:]\n\n${encryptedPrompt}`;
 
@@ -1802,6 +1802,23 @@
       } catch (err) { 
         statusText.innerText = "Error analyzing data. Please try again or skip."; const advBtn = document.getElementById('milestone-advance-btn'); advBtn.innerText = "Continue Journey"; advBtn.disabled = false; advBtn.onclick = function() { triggerHaptic(); finishMilestone(); }; document.getElementById('finale-buttons').style.display = 'flex'; 
       }
+    }
+    
+    function copyPrompt() {
+        triggerHaptic();
+        const copyText = document.getElementById("generated-prompt-text");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); 
+        navigator.clipboard.writeText(copyText.value).then(() => {
+            const btn = document.querySelector('button[onclick="copyPrompt()"]');
+            if (btn) {
+                const originalText = btn.innerText;
+                btn.innerText = "✅ Copied!";
+                setTimeout(() => { btn.innerText = originalText; }, 2000);
+            }
+        }).catch(err => {
+            alert("Clipboard access denied. Please copy the text manually.");
+        });
     }
 
     function generateMilestone() {
@@ -1838,7 +1855,7 @@
 
       setTimeout(() => { isAdvancing = false; }, 1000);
     }
-    
+
     window.addEventListener('DOMContentLoaded', function() {
       try {
         const hasMasterAccess = safeStore.get('master_access'); 
