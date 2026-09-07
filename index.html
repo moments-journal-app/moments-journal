@@ -734,18 +734,57 @@
         } else { errorMsg.innerText = "Incorrect PIN."; errorMsg.style.display = 'block'; document.getElementById('local-pin-input').value = ''; }
     }
 
-    function forgotPinPrompt() {
+   async function forgotPinPrompt() {
       triggerHaptic();
       const code = prompt("Enter your original Invite Code to reset your PIN:");
       if (!code) return;
-      if (code.trim().toUpperCase() === "FG-VIP-TEST" || code.trim().toUpperCase() === "DEV-77" || code.trim().toUpperCase() === "TEST-MODE") {
+      
+      const cleanCode = code.trim().toUpperCase();
+      
+      // 1. Check Dev Codes First
+      if (cleanCode === "FG-VIP-TEST" || cleanCode === "DEV-77" || cleanCode === "TEST-MODE") {
           safeStore.set('local_pin', '');
           document.getElementById('pin-setup-input').value = '';
           document.getElementById('pin-setup-error').style.display = 'none';
           alert("Code accepted. Please set a new 4-digit PIN.");
           showScreen('screen-pin-setup');
-      } else {
-          alert("Incorrect Invite Code.");
+          return;
+      }
+
+      // 2. Check Live Database for Real Codes
+      try {
+          // Provide loading feedback to the user
+          const resetLink = document.querySelector('a[onclick*="forgotPinPrompt"]');
+          const originalText = resetLink ? resetLink.innerText : "Reset via Invite Code";
+          if (resetLink) resetLink.innerText = "Verifying Code...";
+
+          // Fetch the stored API Hash for the backend verification
+          let apiHash = "unknown";
+          const setupStr = safeStore.get('journalSetup');
+          if (setupStr) {
+              const parsed = JSON.parse(setupStr);
+              if (parsed.apiKey) apiHash = generateSimpleHash(parsed.apiKey);
+          }
+
+          // Ping the database
+          const response = await fetchWithTimeout(`${API_URL}?action=verifyCode&code=${cleanCode}&apiHash=${apiHash}`, {}, 8000);
+          const data = await response.json();
+          
+          if (resetLink) resetLink.innerText = originalText;
+
+          if (data && data.valid) {
+              safeStore.set('local_pin', '');
+              document.getElementById('pin-setup-input').value = '';
+              document.getElementById('pin-setup-error').style.display = 'none';
+              alert("Code accepted. Please set a new 4-digit PIN.");
+              showScreen('screen-pin-setup');
+          } else {
+              alert(data.message || "Incorrect Invite Code.");
+          }
+      } catch (err) {
+          const resetLink = document.querySelector('a[onclick*="forgotPinPrompt"]');
+          if (resetLink) resetLink.innerText = "Reset via Invite Code";
+          alert("Network error. Please make sure you are connected to the internet to verify your code.");
       }
     }
 
