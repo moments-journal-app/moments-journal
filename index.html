@@ -1309,15 +1309,25 @@
       recognition.start();
     }
 
-    function openJournalToday(mode) {
+   function openJournalToday(mode) {
       tempDailyPhotoBase64 = ""; 
       document.getElementById('journal-day-title').innerText = `Day ${window.pendingFillDay}`;
       const container = document.getElementById('journal-dynamic-content');
       
+      // 1. DYNAMIC BACKGROUND COLOR
+      if (mode === 'Radiant') {
+          document.body.style.backgroundColor = '#fff9e6'; // Soft, warm, sunny glow
+      } else {
+          document.body.style.backgroundColor = 'var(--bg-color)'; // Default theme
+      }
+
       let html = '';
 
+      // 2. EQUILIBRIUM UI LOGIC
       if (mode === 'Low-Key') {
         html += `<div class="section-title">Low-Key</div><div class="question-block"><div class="question-text">Say something or anything at all. Or just one word or a phrase to describe today:</div><textarea id="anchor-input" class="journal-input" rows="3" placeholder="..."></textarea></div>`;
+      } else if (mode === 'Radiant') {
+        html += `<div class="section-title">Radiant</div><div class="question-block"><div class="question-text">What made you so happy today? Capture the highlight here:</div><textarea id="anchor-input" class="journal-input" rows="3" placeholder="Today I felt amazing because..."></textarea></div>`;
       } else {
         html += `<div class="section-title">The Standout Thing</div><div class="question-block"><div class="question-text">What stands out most about today? Name a specific detail:</div><input type="text" id="anchor-input" class="journal-input" placeholder="Today I noticed..."></div>`;
 
@@ -1328,6 +1338,33 @@
           html += `<div class="section-title">Reflections</div><div id="dynamic-questions-container"></div>`;
         }
       }
+
+      html += `
+        <div class="section-title" style="margin-top: 2rem;">Photo of the Day</div>
+        <div class="file-upload-wrapper" style="margin-bottom:1.5rem; max-width: 100%;">
+          <label for="daily-image-upload" class="file-upload-label" style="padding: 0.8rem; font-size: 0.9rem;">📷 Attach a Memory</label>
+          <input type="file" id="daily-image-upload" class="file-upload-input" accept="image/*" onchange="handleDailyImageUpload(event)">
+          <img id="daily-preview-image" src="" style="width: 100%; border-radius: 12px; margin-top: 10px; display: none; object-fit: cover;">
+          <input type="text" id="photo-context-input" class="journal-input" placeholder="Describe this photo in a short sentence..." style="margin-top:10px; display:none;">
+        </div>
+      `;
+
+      html += `<button type="button" class="btn" id="seal-btn" onclick="triggerHaptic(); sealEntry()" style="margin-top: 1.5rem;">Seal Today's Entry</button>`;
+      container.innerHTML = html;
+
+      // ONLY SHOW REFLECTIONS ON 'BALANCED' DAYS
+      if (mode === 'Balanced') {
+        setTimeout(() => {
+          let questionsToAsk = extractQuestions(mode);
+          const dynamicDiv = document.getElementById('dynamic-questions-container');
+          questionsToAsk.forEach((q, index) => {
+            const uniqueId = `elab-${index}`;
+            dynamicDiv.innerHTML += `<div class="question-block dynamic-toggle" data-question="${q.text}"><div class="question-text">${q.text}</div><div class="toggle-group"><button type="button" class="toggle-btn" onclick="triggerHaptic(); handleToggle(this, '${uniqueId}')">Yes</button><button type="button" class="toggle-btn" onclick="triggerHaptic(); handleToggle(this, '${uniqueId}')">No</button><button type="button" class="toggle-btn" onclick="triggerHaptic(); handleToggle(this, '${uniqueId}')">Skip</button></div><textarea id="${uniqueId}" class="elaboration-field journal-input" rows="2" placeholder="Optional note..."></textarea></div>`;
+          });
+        }, 50);
+      }
+      showScreen('screen-journal');
+    }
 
       html += `
         <div class="section-title" style="margin-top: 2rem;">Photo of the Day</div>
