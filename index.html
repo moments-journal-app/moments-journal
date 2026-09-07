@@ -1500,6 +1500,8 @@
 
     async function sealEntry() {
       const btn = document.getElementById('seal-btn'); btn.innerText = "Encrypting & Analyzing..."; btn.disabled = true;
+      // Reset background back to normal theme
+      document.body.style.backgroundColor = 'var(--bg-color)';
 
       let entryData = {
         day: window.pendingFillDay, energy: activeEnergyMode, friction: activeFriction,
